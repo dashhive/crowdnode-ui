@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdNode.js UI</title>
+  <script>
+  if (localStorage.getItem('invert')){document.documentElement.classList.add('it')}
+  </script>
+  <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+</head>
+<body>
+
+<main>
+  <h1>CrowdNode.js UI</h1>
+
+  <form name="privKeyForm">
+    <fieldset>
+      <input name="privateKey" placeholder="Ðash Private Key (WIF)" />
+      <button type="submit">Use or Generate Private Key</button>
+    </fieldset>
+  </form>
+
+  <form name="initCrowdNodeForm">
+    <fieldset>
+      <button type="submit" disabled>Initiate CrowdNode for Private Key</button>
+    </fieldset>
+  </form>
+
+  <form name="balanceForm">
+    <fieldset>
+      <!-- <input name="address" placeholder="Ðash CrowdNode Address" /> -->
+      <button type="submit" disabled>Get Balance</button>
+    </fieldset>
+  </form>
+
+  <p class="balance">Enter a valid Ðash address above to get the CrowdNode balance.</p>
+</main>
+
+<!-- <script src="./node_modules/dash/dist/dash.min.js"></script> -->
+<script src="https://unpkg.com/@root/request@1.x/urequest.js"></script>
+<script src="https://unpkg.com/dashsight@1.x/dashrequest.js"></script>
+<script src="https://unpkg.com/dashsight@1.x/dashsight.js"></script>
+<script src="https://unpkg.com/dashsight@1.x/dashsocket.js"></script>
+<script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
+<script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
+<script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>
+<script src="https://unpkg.com/@dashincubator/ripemd160/ripemd160.js"></script>
+<script src="https://unpkg.com/dashkeys/dashkeys.js"></script>
+<!-- <script src="https://unpkg.com/dashwallet@0.x/wallet.js"></script> -->
+<script src="https://unpkg.com/crowdnode@1.x/dashapi.js"></script>
+<script src="https://unpkg.com/crowdnode@1.x/crowdnode.js"></script>
+<script src="./utils.js" type="module" async></script>
+<script src="./main.js" type="module" async></script>
+</body>
+</html>
