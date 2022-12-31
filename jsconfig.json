@@ -31,10 +31,13 @@
     "typeRoots": [
       "typings",
       "node_modules/@types",
-      // "node_modules/dash"
+      // "node_modules/@plamikcho/pbcrypto"
     ]
   },
-  "include": ["*.js", "bin/**/*.js", "lib/**/*.js", "src/**/*.js"],
+  "include": [
+    "./types.js",
+    "*.js", "bin/**/*.js", "lib/**/*.js", "src/**/*.js"
+  ],
   "exclude": [
     "node_modules"
   ]
