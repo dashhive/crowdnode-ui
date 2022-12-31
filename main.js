@@ -244,15 +244,17 @@ async function main() {
     event.preventDefault()
 
     // @ts-ignore
-    const { hotwallet } = CrowdNode.main;
+    const { main: { hotwallet }, depositMinimum } = CrowdNode;
 
     if (myPrivateKey) {
       // @ts-ignore
       let cnSignup = await CrowdNode.signup(myPrivateKey.wif, hotwallet);
       // @ts-ignore
       let cnAccept = await CrowdNode.accept(myPrivateKey.wif, hotwallet);
+      // @ts-ignore
+      let cnDeposit = await CrowdNode.deposit(myPrivateKey.wif, hotwallet, depositMinimum);
 
-      console.log('privKey', myPrivateKey, cnSignup, cnAccept)
+      console.log('privKey', myPrivateKey, [cnSignup, cnAccept, cnDeposit])
     }
   })
 
