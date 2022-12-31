@@ -14,27 +14,45 @@
 <main>
   <h1>CrowdNode.js UI</h1>
 
-  <form name="privKeyForm">
+  <form name="encPrivKey">
     <fieldset>
-      <input name="privateKey" placeholder="Ðash Private Key (WIF)" />
-      <button type="submit">Use or Generate Private Key</button>
+      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" />
+      <button type="submit">Encrypt/Decrypt Private Key</button>
+      <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
+      <div class="error"></div>
     </fieldset>
   </form>
 
+  <form name="privKeyForm">
+    <fieldset disabled>
+      <input name="privateKey" placeholder="Ðash Private Key (WIF)" />
+      <button type="submit">Use or Generate Private Key</button>
+      <label>
+        <input type="checkbox" name="remember" /> Remember Private Key
+      </label>
+    </fieldset>
+  </form>
+
+  <script async>
+    document.privKeyForm.remember.checked = JSON.parse(localStorage.getItem('remember'))
+  </script>
+
   <form name="initCrowdNodeForm">
-    <fieldset>
-      <button type="submit" disabled>Initiate CrowdNode for Private Key</button>
+    <fieldset disabled>
+      <button type="submit">Initiate CrowdNode for Private Key</button>
     </fieldset>
   </form>
 
   <form name="balanceForm">
-    <fieldset>
+    <fieldset disabled>
       <!-- <input name="address" placeholder="Ðash CrowdNode Address" /> -->
-      <button type="submit" disabled>Get Balance</button>
+      <button type="submit">Get Balance</button>
     </fieldset>
   </form>
 
-  <p class="balance">Enter a valid Ðash address above to get the CrowdNode balance.</p>
+  <p class="balance">
+    <!-- Enter a valid Ðash address above to get the CrowdNode balance. -->
+  </p>
 </main>
 
 <!-- <script src="./node_modules/dash/dist/dash.min.js"></script> -->
@@ -45,6 +63,7 @@
 <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
 <script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
 <script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>
+<!-- <script src="https://unpkg.com/@dashincubator/blocktx/blocktx.js"></script> -->
 <script src="https://unpkg.com/@dashincubator/ripemd160/ripemd160.js"></script>
 <script src="https://unpkg.com/dashkeys/dashkeys.js"></script>
 <!-- <script src="https://unpkg.com/dashwallet@0.x/wallet.js"></script> -->

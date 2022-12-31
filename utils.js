@@ -1,6 +1,7 @@
 // From https://github.com/dashhive/dashkeys.js#helpful-helper-functions
 
 // let Base58Check = require("@dashincubator/base58check").Base58Check;
+// @ts-ignore
 let dash58check = Base58Check.create({
   pubKeyHashVersion: "4c", // "8c" for dash testnet, "00" for bitcoin main
   privateKeyVersion: "cc", // "ef" for dash testnet, "80" for bitcoin main
@@ -42,7 +43,7 @@ async function wifToPrivateKey(wif) {
 */
 async function privateKeyToWif(privKey) {
   let privateKey = uint8ArrayToHex(privKey);
-  
+
   let wif = await dash58check.encode({ privateKey: privateKey });
   return wif;
 }
@@ -54,34 +55,34 @@ async function decode(addrOrWif) {
   let parts = await dash58check.decode(addrOrWif);
   let check = await dash58check.checksum(parts);
   let valid = parts.check === check;
-  
+
   parts.valid = valid;
   //parts.privateKeyBuffer = hexToUint8Array(parts.privateKey);
   //parts.pubKeyHashBuffer = hexToUint8Array(parts.pubKeyHash);
-  
+
   return parts;
 }
 
 /**
 * @param {Uint8Array} buf
-* @returns {String} - Pay Addr or WIF
+* @returns {Promise<string>} - Pay Addr or WIF
 * @throws {Error}
 */
 async function encode(buf) {
   let hex = uint8ArrayToHex(buf);
-  
+
   if (32 === buf.length) {
     return await dash58check.encode({
       privateKey: hex,
     });
   }
-  
+
   if (20 === buf.length) {
     return await dash58check.encode({
       pubKeyHash: hex,
     });
   }
-  
+
   throw new Error("buffer length must be (PubKeyHash) or 32 (PrivateKey)");
 }
 
@@ -94,12 +95,12 @@ async function encode(buf) {
 function uint8ArrayToHex(buf) {
   /** @type {Array<String>} */
   let hex = [];
-  
+
   buf.forEach(function (b) {
     let c = b.toString(16).padStart(2, "0");
     hex.push(c);
   });
-  
+
   return hex.join("");
 }
 
@@ -111,13 +112,13 @@ function uint8ArrayToHex(buf) {
 */
 function hexToUint8Array(hex) {
   let buf = new Uint8Array(hex.length / 2);
-  
+
   for (let i = 0; i < hex.length; i += 2) {
     let c = hex.slice(i, i + 2);
     let b = parseInt(c, 16);
     let index = i / 2;
     buf[index] = b;
   }
-  
+
   return buf;
 }
