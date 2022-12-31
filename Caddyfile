@@ -1,0 +1,8 @@
+{
+	http_port 5555
+	https_port 5443
+}
+
+localhost:5443
+
+file_server
