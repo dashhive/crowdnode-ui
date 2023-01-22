@@ -11,6 +11,7 @@
 
   --info: #0bf;
   --note: #888;
+  --warn: #fd0; /* warn */
   --dang: #f55; /* danger */
   --succ: #5b5; /* success */
 
@@ -35,10 +36,10 @@
 * { box-sizing: border-box; }
 
 @media (prefers-color-scheme: light) {
-  html:not(.it),img,video { filter: invert(95%) hue-rotate(180deg); }
+  html:not(.it),img,svg,video { filter: invert(95%) hue-rotate(180deg); }
 }
 @media (prefers-color-scheme: dark) {
-  html.it,img,video { filter: invert(95%) hue-rotate(180deg); }
+  html.it,img,svg,video { filter: invert(95%) hue-rotate(180deg); }
 }
 
 body {
@@ -127,6 +128,10 @@ input, select {
   height: 3rem;
   /* max-width: 24rem; */
 }
+input:invalid {
+  border-color: var(--dang);
+  outline: var(--dang);
+}
 label {
   display: flex;
   flex-direction: row;
@@ -195,6 +200,20 @@ pre code output {
 form[name="network"] {
   justify-content: center;
 }
+figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+figure h4 {
+  font-size: 2rem;
+}
+svg {
+  max-width: 50%;
+  margin: 0 auto;
+  display: block;
+}
 
 .hide {
   display: none;
@@ -223,6 +242,10 @@ form[name="network"] {
   max-width: initial;
   line-height: 2;
 }
+.balance {
+  text-align: center;
+}
+
 @media (min-width: 650px) {
   form {
     max-width: 80%;
