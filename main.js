@@ -1,8 +1,15 @@
 // let DashKeys = window.DashKeys;
 // import { getEncryptedStorage, } from './node_modules/@plamikcho/pbcrypto/src/index.js';
 import { getEncryptedStorage, } from './CryptStore.js';
+import { qrSvg, } from './qr.js';
+import { toDuff, toDash } from './utils.js'
 
 const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
+
+// @ts-ignore
+let dashsight = DashSight.create({
+  baseUrl: 'https://dashsight.dashincubator.dev',
+});
 
 let rememberMe = JSON.parse(localStorage.getItem('remember'))
 let store = rememberMe ? localStorage : sessionStorage
@@ -15,6 +22,22 @@ let encryptedStore
 //   .then(() => encryptedStore.getItem('test'))
 //   .then(item => console.log('encryptedStorage getItem', item));
 //   // .catch(error => console.log(error));
+
+function resetFormFields() {
+  // @ts-ignore
+  document.encPrivKey.querySelector('fieldset').disabled = true
+  // @ts-ignore
+  document.privKeyForm.querySelector('fieldset').disabled = true
+  // @ts-ignore
+  document.signupCrowdNodeForm.querySelector('fieldset').disabled = true
+  // @ts-ignore
+  document.acceptCrowdNodeForm.querySelector('fieldset').disabled = true
+  // @ts-ignore
+  document.depositCrowdNodeForm.querySelectorAll('fieldset')
+    .forEach(el => el.disabled = true)
+  // @ts-ignore
+  document.balanceForm.querySelector('fieldset').disabled = true
+}
 
 async function getPrivateKey(wif) {
   let addr
@@ -47,17 +70,92 @@ function swapStorage(to, from, key) {
   from.removeItem(key)
 }
 
+async function checkWalletFunds(addr) {
+  // @ts-ignore
+  let walletFunds = await dashsight.getInstantBalance(addr)
+
+  console.info('check wallet funds', walletFunds)
+
+  return walletFunds
+}
+
+async function fundOrInit(addr) {
+  // @ts-ignore
+  const { hotwallet } = CrowdNode.main;
+
+  let walletFunds = await checkWalletFunds(addr)
+
+  if (walletFunds.balance === 0) {
+    let dashSvg = qrSvg(
+      `dash://${addr}`,
+      {
+        background: '#fff0',
+        color: '#000',
+        indent: 1,
+        padding: 1,
+        size: 'mini',
+        container: 'svg-viewbox',
+        join: true,
+      }
+    )
+    document.getElementById("funding").innerHTML = `
+      <h4>Current Balance: Đ${walletFunds.balance}</h4>
+      ${dashSvg}
+      <figcaption>
+        <h3>${addr}</h3>
+        <p>You must fund your wallet with at least Đ 0.00236608 to signup and accept terms</p>
+      </figcaption>
+    `;
+  } else if (walletFunds.balance > 0) {
+      // @ts-ignore
+      let cnStatus = await CrowdNode.status(addr, hotwallet);
+
+      console.log(
+        `CrowdNode status for ${addr}`,
+        cnStatus,
+        walletFunds,
+        CrowdNode.offset,
+      )
+      let msg = `<p>Current Wallet balance for "${
+        addr
+      }" is Đ${
+        walletFunds.balance
+      }</p>`
+
+      document.querySelector('p.balance')
+        .insertAdjacentHTML('afterbegin', msg)
+
+      // @ts-ignore
+      document.depositCrowdNodeForm.amount.max = walletFunds.balance
+      // @ts-ignore
+      // document.depositCrowdNodeForm.amount.max = toDash(toDuff(walletFunds.balance) - CrowdNode.offset)
+
+      if (!cnStatus || cnStatus?.signup === 0) {
+        // @ts-ignore
+        document.signupCrowdNodeForm.querySelector('fieldset').disabled = false
+      } else if (cnStatus.signup > 0 && cnStatus?.accept === 0) {
+        // @ts-ignore
+        document.acceptCrowdNodeForm.querySelector('fieldset').disabled = false
+      } else {
+        // @ts-ignore
+        document.depositCrowdNodeForm.querySelectorAll('fieldset')
+          .forEach(el => el.disabled = false)
+        // @ts-ignore
+        document.balanceForm.querySelector('fieldset').disabled = false
+      }
+  }
+}
+
 async function main() {
   // @ts-ignore
   CrowdNode.init({
+    // baseUrl: 'https://app.crowdnode.io',
+    // insightBaseUrl: 'https://insight.dash.org',
     baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
     insightBaseUrl: 'https://insight.dash.org/insight-api',
     dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
     dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
-
-  // @ts-ignore
-  console.log('CrowdNode', CrowdNode)
 
   // @ts-ignore
   document.encPrivKey
@@ -68,7 +166,7 @@ async function main() {
       passphrase = document.encPrivKey.passphrase?.value
 
       if (passphrase) {
-        console.log('passphrase', passphrase)
+        // console.log('passphrase', passphrase)
         // @ts-ignore
         document.encPrivKey.passphrase.value = ''
 
@@ -78,13 +176,19 @@ async function main() {
           STOREAGE_SALT
         );
 
+        const privateKeyExists = await encryptedStore.hasItem('privateKey')
         const privateKey = await encryptedStore.getItem('privateKey')
 
         // @ts-ignore
         document.privKeyForm.querySelector('button').disabled = false
 
-        // @ts-ignore
-        if (privateKey && privateKey !== '') {
+        if (
+          !privateKeyExists ||
+          (
+            privateKey &&
+            privateKey !== ''
+          )
+        ) {
           // @ts-ignore
           myPrivateKey = await getPrivateKey(privateKey)
 
@@ -99,25 +203,8 @@ async function main() {
           document.encPrivKey.querySelector('.error').textContent = ''
           document.encPrivKey.querySelector('fieldset').disabled = true
 
-          // @ts-ignore
-          const { hotwallet } = CrowdNode.main;
-
-          // @ts-ignore
-          let cnStatus = await CrowdNode.status(myPrivateKey.addr, hotwallet);
-
-          console.log(
-            `CrowdNode status for ${myPrivateKey.addr}`,
-            cnStatus
-          )
-
-          if (!cnStatus) {
-            // @ts-ignore
-            document.initCrowdNodeForm.querySelector('fieldset').disabled = false
-          } else {
-            // @ts-ignore
-            document.balanceForm.querySelector('fieldset').disabled = false
-          }
-        } else {
+          await fundOrInit(myPrivateKey.addr)
+        } else if (privateKeyExists) {
           let errMsg = 'Unable to retrieve private key. Check if your password is correct.'
           console.warn(errMsg)
           document.encPrivKey.querySelector('.error').textContent = `
@@ -183,12 +270,6 @@ async function main() {
           passphrase,
           STOREAGE_SALT
         );
-
-        // @ts-ignore
-        // if (document.privKeyForm.privateKey?.value?.trim() !== '') {
-        //   // @ts-ignore
-        //   document.privKeyForm.querySelector('button').disabled = false
-        // }
       } else {
         if (
           // @ts-ignore
@@ -215,46 +296,95 @@ async function main() {
       myPrivateKey = await getPrivateKey(privateKey)
 
       if (myPrivateKey) {
-        console.log('privKey', myPrivateKey)
+        resetFormFields()
+        // console.log('privKey', myPrivateKey)
         // @ts-ignore
         document.privKeyForm.privateKey.value = myPrivateKey.wif
         // @ts-ignore
         document.privKeyForm.querySelector('button').disabled = true
 
-        // @ts-ignore
-        const { hotwallet } = CrowdNode.main;
-
-        // @ts-ignore
-        let cnStatus = await CrowdNode.status(myPrivateKey.addr, hotwallet);
-
-        console.log(`CrowdNode status for ${myPrivateKey.addr}`, cnStatus)
-
-        if (!cnStatus) {
-          // @ts-ignore
-          document.initCrowdNodeForm.querySelector('fieldset').disabled = false
-        } else {
-          // @ts-ignore
-          document.balanceForm.querySelector('fieldset').disabled = false
-        }
+        await fundOrInit(myPrivateKey.addr)
       }
     })
 
   // @ts-ignore
-  document.initCrowdNodeForm.addEventListener('submit', async event => {
+  document.signupCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
     // @ts-ignore
     const { main: { hotwallet }, depositMinimum } = CrowdNode;
 
     if (myPrivateKey) {
+      console.log('privKey', myPrivateKey, [hotwallet, depositMinimum])
       // @ts-ignore
       let cnSignup = await CrowdNode.signup(myPrivateKey.wif, hotwallet);
+      console.log('privKey cnSignup', cnSignup)
+      // @ts-ignore
+      document.signupCrowdNodeForm.querySelector('fieldset').disabled = true
+      // @ts-ignore
+      document.acceptCrowdNodeForm.querySelector('fieldset').disabled = false
+    }
+  })
+
+  // @ts-ignore
+  document.acceptCrowdNodeForm.addEventListener('submit', async event => {
+    event.preventDefault()
+
+    // @ts-ignore
+    const { main: { hotwallet }, depositMinimum } = CrowdNode;
+
+    if (myPrivateKey) {
+      console.log('privKey', myPrivateKey, [hotwallet, depositMinimum])
       // @ts-ignore
       let cnAccept = await CrowdNode.accept(myPrivateKey.wif, hotwallet);
-      // @ts-ignore
-      let cnDeposit = await CrowdNode.deposit(myPrivateKey.wif, hotwallet, depositMinimum);
+      console.log('privKey cnAccept', cnAccept)
+      // if (!cnAccept || cnAccept.accept === 0) {
+      //   // @ts-ignore
+      //   document.signupCrowdNodeForm.querySelector('fieldset').disabled = false
+      // } else {
+        // @ts-ignore
+        document.acceptCrowdNodeForm.querySelector('fieldset').disabled = true
+        // @ts-ignore
+        document.depositCrowdNodeForm.querySelectorAll('fieldset')
+          .forEach(el => el.disabled = false)
+        // @ts-ignore
+        document.balanceForm.querySelector('fieldset').disabled = false
+      // }
+    }
+  })
 
-      console.log('privKey', myPrivateKey, [cnSignup, cnAccept, cnDeposit])
+  // @ts-ignore
+  document.depositCrowdNodeForm.addEventListener('submit', async event => {
+    event.preventDefault()
+
+    // @ts-ignore
+    const amount = document.depositCrowdNodeForm.amount?.value
+
+    // @ts-ignore
+    const { main: { hotwallet }, depositMinimum } = CrowdNode;
+
+    console.log(
+      'depositCrowdNodeForm amount',
+      amount,
+      toDuff(amount),
+    )
+
+    if (myPrivateKey) {
+      const { addr } = myPrivateKey
+      // @ts-ignore
+      let cnDeposit = await CrowdNode.deposit(
+        myPrivateKey.wif,
+        hotwallet,
+        toDuff(amount) || false
+      );
+
+      console.log(
+        'privKey cnDeposit',
+        cnDeposit
+      )
+
+      // @ts-ignore
+      // document.balanceForm.submit()
     }
   })
 
@@ -264,23 +394,37 @@ async function main() {
 
     if (myPrivateKey) {
       const { addr } = myPrivateKey
+      let walletFunds = await checkWalletFunds(addr)
       let balance = await getBalance(addr)
 
+      if (walletFunds) {
+        let msg = `<p>Current Wallet balance for "${
+          addr
+        }" is Đ${
+          walletFunds.balance
+        }</p>`
+
+        document.querySelector('p.balance')
+          .insertAdjacentHTML('afterbegin', msg)
+      }
+
       if (balance?.TotalBalance) {
-        let msg = `Current CrowdNode balance for "${
+        let msg = `<p>Current CrowdNode balance for "${
           addr
         }" is Đ${
           balance.TotalBalance
         } with ${
           balance.TotalDividend
-        } in dividends.`
+        } in dividends.</p>`
 
         console.info(
           msg,
           balance
         );
 
-        document.querySelector('p.balance').textContent = msg
+        document.querySelector('p.balance')
+          .insertAdjacentHTML('beforeend', msg)
+        // document.querySelector('p.balance').textContent = msg
       } else {
         console.warn(
           balance.value

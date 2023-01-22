@@ -1,8 +1,10 @@
+export const DUFFS = 100000000;
+
 // From https://github.com/dashhive/dashkeys.js#helpful-helper-functions
 
 // let Base58Check = require("@dashincubator/base58check").Base58Check;
 // @ts-ignore
-let dash58check = Base58Check.create({
+export let dash58check = Base58Check.create({
   pubKeyHashVersion: "4c", // "8c" for dash testnet, "00" for bitcoin main
   privateKeyVersion: "cc", // "ef" for dash testnet, "80" for bitcoin main
 });
@@ -11,7 +13,7 @@ let dash58check = Base58Check.create({
 * @param {String} addr
 * @returns {Promise<Uint8Array>} - p2pkh (no magic byte or checksum)
 */
-async function addrToPubKeyHash(addr) {
+export async function addrToPubKeyHash(addr) {
   let b58cAddr = dash58check.decode(addr);
   let pubKeyHash = hexToUint8Array(b58cAddr.pubKeyHash);
   return pubKeyHash;
@@ -21,7 +23,7 @@ async function addrToPubKeyHash(addr) {
 * @param {Uint8Array} pubKeyHash - no magic byte or checksum
 * @returns {Promise<String>} - Pay Addr
 */
-async function pubKeyHashToAddr(pubKeyHash) {
+export async function pubKeyHashToAddr(pubKeyHash) {
   let hex = uint8ArrayToHex(pubKeyHash);
   let addr = await dash58check.encode({ pubkeyHash: hex });
   return addr;
@@ -31,7 +33,7 @@ async function pubKeyHashToAddr(pubKeyHash) {
 * @param {String} wif
 * @returns {Promise<Uint8Array>} - private key (no magic byte or checksum)
 */
-async function wifToPrivateKey(wif) {
+export async function wifToPrivateKey(wif) {
   let b58cWif = dash58check.decode(wif);
   let privateKey = hexToUint8Array(b58cWif.privateKey);
   return privateKey;
@@ -41,7 +43,7 @@ async function wifToPrivateKey(wif) {
 * @param {Uint8Array} privKey
 * @returns {Promise<String>} - wif
 */
-async function privateKeyToWif(privKey) {
+export async function privateKeyToWif(privKey) {
   let privateKey = uint8ArrayToHex(privKey);
 
   let wif = await dash58check.encode({ privateKey: privateKey });
@@ -51,7 +53,7 @@ async function privateKeyToWif(privKey) {
 /**
 * @param {String} addrOrWif
 */
-async function decode(addrOrWif) {
+export async function decode(addrOrWif) {
   let parts = await dash58check.decode(addrOrWif);
   let check = await dash58check.checksum(parts);
   let valid = parts.check === check;
@@ -68,7 +70,7 @@ async function decode(addrOrWif) {
 * @returns {Promise<string>} - Pay Addr or WIF
 * @throws {Error}
 */
-async function encode(buf) {
+export async function encode(buf) {
   let hex = uint8ArrayToHex(buf);
 
   if (32 === buf.length) {
@@ -92,7 +94,7 @@ async function encode(buf) {
 * @param {Uint8Array} buf
 * @returns {String} - hex
 */
-function uint8ArrayToHex(buf) {
+export function uint8ArrayToHex(buf) {
   /** @type {Array<String>} */
   let hex = [];
 
@@ -110,7 +112,7 @@ function uint8ArrayToHex(buf) {
 * @param {String} hex
 * @returns {Uint8Array} - JS Buffer (Node and Browsers)
 */
-function hexToUint8Array(hex) {
+export function hexToUint8Array(hex) {
   let buf = new Uint8Array(hex.length / 2);
 
   for (let i = 0; i < hex.length; i += 2) {
@@ -121,4 +123,26 @@ function hexToUint8Array(hex) {
   }
 
   return buf;
+}
+
+/**
+ * @param {Number} duffs - ex: 00000000
+ */
+export function toDash(duffs) {
+  return (duffs / DUFFS).toFixed(8);
+}
+
+/**
+ * @param {Number} duffs - ex: 00000000
+ */
+export function toDASH(duffs) {
+  let dash = (duffs / DUFFS).toFixed(8);
+  return `Đ` + dash.padStart(12, " ");
+}
+
+/**
+ * @param {String} dash - ex: 0.00000000
+ */
+export function toDuff(dash) {
+  return Math.round(parseFloat(dash) * DUFFS);
 }
