@@ -1,5 +1,5 @@
-// Base on https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt
-// Base on https://github.com/plamikcho/local-storage-encrypt
+// Based on https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt
+// Based on https://github.com/plamikcho/local-storage-encrypt
 
 // Encoder based on https://github.com/plamikcho/local-storage-encrypt/blob/master/src/encoder.js
 export function bufferToString(buffer) {
@@ -175,6 +175,16 @@ export function getEncryptedStorageFromCrypto(
         }
       }
       return storage.getItem(key); // legacy mode, no encryption
+    },
+    async hasItem(key) {
+      const data = storage.getItem(key);
+      const iv = storage.getItem(getInitVectorKey(key));
+      console.log(
+        'crypt store has item', key,
+        data, iv,
+        data !== null && iv !== null
+      )
+      return data !== null && iv !== null
     },
     removeItem(key) {
       storage.removeItem(key);
