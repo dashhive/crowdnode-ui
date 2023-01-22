@@ -22,9 +22,7 @@
   "private": true,
   "main": "index.html",
   "scripts": {
-    "start": "caddy start",
-    "stop": "caddy stop",
-    "oldstart": "npx serve -l 5555 ."
+    "start": "npx sirv-cli --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 5443 ."
   },
   "engines": {
     "node": ">=18.0.0"
@@ -33,7 +31,8 @@
     "crowdnode": "^1.8.0",
     "dashkeys": "^0.3.1",
     "dashsight": "^1.3.5",
-    "dashwallet": "^0.2.1"
+    "dashwallet": "^0.2.1",
+    "qrcode-svg": "^1.1.0"
   },
   "devDependencies": {
     "@plamikcho/pbcrypto": "^2.2.1"
