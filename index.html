@@ -37,9 +37,31 @@
     document.privKeyForm.remember.checked = JSON.parse(localStorage.getItem('remember'))
   </script>
 
-  <form name="initCrowdNodeForm">
+  <figure id="funding"></figure>
+
+  <form name="signupCrowdNodeForm">
     <fieldset disabled>
-      <button type="submit">Initiate CrowdNode for Private Key</button>
+      <button type="submit">Signup for CrowdNode for Private Key</button>
+    </fieldset>
+  </form>
+
+  <form name="acceptCrowdNodeForm">
+    <fieldset disabled>
+      <button type="submit">Accept CrowdNode TOS for Private Key</button>
+    </fieldset>
+  </form>
+
+  <form name="depositCrowdNodeForm">
+    <fieldset disabled>
+      <input
+        type="number"
+        name="amount"
+        step="0.00000001"
+        placeholder="Ðash Amount (0.001)"
+      />
+    </fieldset>
+    <fieldset disabled>
+      <button type="submit">Deposit Funds to CrowdNode</button>
     </fieldset>
   </form>
 
@@ -58,8 +80,10 @@
 <!-- <script src="./node_modules/dash/dist/dash.min.js"></script> -->
 <script src="https://unpkg.com/@root/request@1.x/urequest.js"></script>
 <script src="https://unpkg.com/dashsight@1.x/dashrequest.js"></script>
-<script src="https://unpkg.com/dashsight@1.x/dashsight.js"></script>
-<script src="https://unpkg.com/dashsight@1.x/dashsocket.js"></script>
+<!-- <script src="https://unpkg.com/dashsight@1.x/dashsight.js"></script> -->
+<script src="./node_modules/dashsight/dashsight.js"></script>
+<!-- <script src="https://unpkg.com/dashsight@1.x/dashsocket.js"></script> -->
+<script src="./node_modules/dashsight/dashsocket.js"></script>
 <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
 <script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
 <script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>
@@ -68,8 +92,10 @@
 <script src="https://unpkg.com/dashkeys/dashkeys.js"></script>
 <!-- <script src="https://unpkg.com/dashwallet@0.x/wallet.js"></script> -->
 <script src="https://unpkg.com/crowdnode@1.x/dashapi.js"></script>
-<script src="https://unpkg.com/crowdnode@1.x/crowdnode.js"></script>
-<script src="./utils.js" type="module" async></script>
+<!-- <script src="https://unpkg.com/crowdnode@1.x/crowdnode.js"></script> -->
+<script src="./node_modules/crowdnode/crowdnode.js"></script>
+<script src="https://unpkg.com/qrcode-svg@1.x/dist/qrcode.min.js"></script>
+<!-- <script src="./utils.js" type="module" async></script> -->
 <script src="./main.js" type="module" async></script>
 </body>
 </html>
