@@ -193,7 +193,7 @@ async function main() {
           myPrivateKey = await getPrivateKey(privateKey)
 
           // @ts-ignore
-          document.privKeyForm.privateKey.value = privateKey
+          document.privKeyForm.privateKey.value = privateKey || myPrivateKey.wif
 
           // @ts-ignore
           document.privKeyForm.querySelector('fieldset').disabled = false
