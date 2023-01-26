@@ -56,7 +56,7 @@ export function showQr(addr, duffs = 0) {
   }
 
   let dashQr = qrSvg(dashUri, { indent: 4, size: "mini" });
-  let addrPad = Math.max(0, Math.ceil((qrWidth - dashUri.length) / 2));
+  // let addrPad = Math.max(0, Math.ceil((qrWidth - dashUri.length) / 2));
 
   // console.info(dashQr);
   // console.info();
