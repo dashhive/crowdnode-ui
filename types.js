@@ -1,7 +1,6 @@
 /**
  * @typedef {import("@plamikcho/pbcrypto").ICrypto} BaseICrypto
- * @typedef {Window & import("@dashincubator/base58check/base58check.js") & import("dashsight/dashsight.js").Dashsight & import("dashsight/dashsocket.js").DashSocket & import("dashkeys/dashkeys.js")}
- * @typedef {Window & import("crowdnode/crowdnode.js")} CrowdNode
+ * @typedef {Window & import("@dashincubator/base58check/base58check.js")}
  *
  * @typedef {Object} Encrypto
  * @property {BaseICrypto["encrypt"]} encrypt
@@ -16,11 +15,11 @@
  * }} AlternativeDefinitionStyle
  *
  * @typedef {{
- *  encPrivKey?: HTMLElement;
+ *  encPrivKey?: HTMLElement & { passphrase?: HTMLInputElement };
  *  signupCrowdNodeForm?: HTMLElement;
  *  acceptCrowdNodeForm?: HTMLElement;
- *  depositCrowdNodeForm?: HTMLElement;
- *  privKeyForm?: HTMLElement;
+ *  depositCrowdNodeForm?: HTMLElement & { amount?: HTMLInputElement };
+ *  privKeyForm?: HTMLElement & { privateKey?: HTMLInputElement };
  *  balanceForm?: HTMLElement;
  * } & Document} document
  *
