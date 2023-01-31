@@ -1,20 +1,22 @@
-// @ts-nocheck
-// let DashKeys = window.DashKeys;
-// import { getEncryptedStorage, } from './node_modules/@plamikcho/pbcrypto/src/index.js';
 import { getEncryptedStorage, } from './CryptStore.js';
 import { qrSvg, } from './qr.js';
 import { toDuff, toDash } from './utils.js'
+import {
+  DashKeys,
+  DashSight,
+  DashSocket,
+  DashApi,
+  CrowdNode
+} from './imports.js'
 
 /** @type {document} */
 const $d = document;
-
-const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
 
 let dashsight = DashSight.create({
   baseUrl: 'https://dashsight.dashincubator.dev',
 });
 
-
+// /** @type {typeof DashSocket.DashSocket} */
 let Ws = DashSocket;
 
 let rememberMe = JSON.parse(localStorage.getItem('remember'))
@@ -23,6 +25,17 @@ let store = rememberMe ? localStorage : sessionStorage
 let passphrase
 let myPrivateKey
 let encryptedStore
+
+const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
+
+const { hotwallet } = CrowdNode.main;
+const { depositMinimum, stakeMinimum } = CrowdNode
+const { signupForApi, acceptTerms, offset } = CrowdNode.requests;
+let feeEstimate = 500;
+let signupOnly = signupForApi + offset;
+let acceptOnly = acceptTerms + offset;
+let signupFees = signupOnly + acceptOnly;
+let signupTotal = signupFees + 2 * feeEstimate;
 
 function resetFormFields() {
   $d.encPrivKey.querySelector('fieldset').disabled = true
@@ -38,13 +51,11 @@ async function getPrivateKey(wif) {
   let addr
 
   if (!wif) {
-
     wif = await DashKeys.generate();
   }
   encryptedStore.setItem('privateKey', wif)
 
   try {
-
     addr = await DashKeys.wifToAddr(wif);
   } catch (err) {
     console.error('Invalid private key WIF')
@@ -54,9 +65,6 @@ async function getPrivateKey(wif) {
 }
 
 async function getBalance(address) {
-
-
-  /** @type {CrowdNode} */
   return await CrowdNode.http.GetBalance(
     address
   );
@@ -68,7 +76,6 @@ function swapStorage(to, from, key) {
 }
 
 async function checkWalletFunds(addr) {
-
   let walletFunds = await dashsight.getInstantBalance(addr)
 
   console.info('check wallet funds', walletFunds)
@@ -129,43 +136,117 @@ async function displayBalances(addr, funds, cnBalance) {
   }
 }
 
+/**
+ * `requestFundsQR` returns a string to be used in HTML that displays
+ * a QR Code in SVG format with text description including optional
+ * `msg` appended
+ *
+ * @param {string} addr
+ * @param {import('dashsight').InstantBalance} currentFunds
+ * @param {number} fundsNeeded - in satoshis
+ * @param {string} [msg]
+ * @returns {string}
+ */
+function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
+  let dashSvg = qrSvg(
+    `dash://${addr}`,
+    {
+      background: '#fff0',
+      color: '#000',
+      indent: 1,
+      padding: 1,
+      size: 'mini',
+      container: 'svg-viewbox',
+      join: true,
+    }
+  )
+
+  let fundingDiff = `<p>
+    You must deposit at least <strong>Đ ${toDash(fundsNeeded - currentFunds.balanceSat)}</strong>
+  </p>`
+
+  if (currentFunds.balanceSat > 0) {
+    fundingDiff = `
+      <p>You have <strong>Đ ${toDash(currentFunds.balanceSat)}</strong> in your wallet. This step requires <strong>Đ ${toDash(fundsNeeded)}</strong>.</p>
+      <p>You must deposit at least <strong>Đ ${toDash(fundsNeeded - currentFunds.balanceSat)}</strong> more Dash</p>
+    `
+  }
+
+  return `
+    <h4>Current Balance: Đ ${currentFunds.balance}</h4>
+    ${dashSvg}
+    <figcaption>
+      <h3>${addr}</h3>
+      ${fundingDiff}
+      ${msg && '<p>'+msg+'</p>'}
+    </figcaption>
+  `
+}
+
+/**
+ * `hasOrRequestFunds` checks if the current wallet has the
+ * funds required, if not it displays the QR Code SVG request
+ * and awaits funding, if it does have enough funds it
+ * returns the values
+ *
+ * @param {string} addr
+ * @param {number} requiredFunds
+ * @param {string} [msg]
+ * @param {function} [callback]
+ * @returns {Promise<Object, number>}
+ */
+async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) {
+  let walletFunding
+  let walletFunds = await checkWalletFunds(addr)
+  let fundsNeeded = walletFunds.balanceSat < requiredFunds
+
+  console.log('hasOrRequestFunds', walletFunds.balanceSat, requiredFunds, fundsNeeded)
+
+  if (fundsNeeded) {
+    $d.getElementById("funding").innerHTML = requestFundsQR(
+      addr,
+      walletFunds,
+      requiredFunds,
+      msg
+    )
+
+    walletFunding = await Ws.waitForVout(
+      CrowdNode._dashsocketBaseUrl,
+      addr,
+      0,
+    )
+
+    if (walletFunding.satoshis < requiredFunds) {
+      await hasOrRequestFunds(addr, requiredFunds, msg)
+    }
+  }
+
+  return {
+    walletFunds,
+    fundsNeeded
+  }
+}
+
 async function fundOrInit(addr) {
-
-  const { hotwallet } = CrowdNode.main;
-
   let walletFunds = await checkWalletFunds(addr)
 
   if (walletFunds.balance === 0) {
-    let dashSvg = qrSvg(
-      `dash://${addr}`,
-      {
-        background: '#fff0',
-        color: '#000',
-        indent: 1,
-        padding: 1,
-        size: 'mini',
-        container: 'svg-viewbox',
-        join: true,
-      }
+    $d.getElementById("funding").innerHTML = requestFundsQR(
+      addr,
+      walletFunds,
+      // 0.00236608,
+      signupFees,
+      'to signup and accept CrowdNode terms'
     )
-    $d.getElementById("funding").innerHTML = `
-      <h4>Current Balance: Đ${walletFunds.balance}</h4>
-      ${dashSvg}
-      <figcaption>
-        <h3>${addr}</h3>
-        <p>You must fund your wallet with at least Đ 0.00236608 to signup and accept terms</p>
-      </figcaption>
-    `
 
     let walletFunding = await Ws.waitForVout(
-
       CrowdNode._dashsocketBaseUrl,
       addr,
       0,
     )
 
     if (walletFunding.satoshis > 0) {
-      walletFunds.balance = toDash(walletFunding.satoshis)
+      walletFunds.balance = parseFloat(toDash(walletFunding.satoshis))
       walletFunds.balanceSat = walletFunding.satoshis
     }
   }
@@ -173,24 +254,31 @@ async function fundOrInit(addr) {
   if (walletFunds.balance > 0) {
       $d.getElementById("funding").innerHTML = ''
 
-
       let cnStatus = await CrowdNode.status(addr, hotwallet);
 
       await displayBalances(addr, walletFunds)
 
-
-      $d.depositCrowdNodeForm.amount.max = walletFunds.balance
+      $d.depositCrowdNodeForm.amount.max = walletFunds.balance.toString()
 
       // $d.depositCrowdNodeForm.amount.max = toDash(toDuff(walletFunds.balance) - CrowdNode.offset)
 
       if (!cnStatus || cnStatus?.signup === 0) {
+        await hasOrRequestFunds(
+          myPrivateKey.addr,
+          signupOnly + feeEstimate,
+          'to signup for CrowdNode'
+        )
 
         $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
-      } else if (cnStatus.signup > 0 && cnStatus?.accept === 0) {
+      } else if (cnStatus.signup > 0 && cnStatus.accept === 0) {
+        await hasOrRequestFunds(
+          myPrivateKey.addr,
+          acceptOnly + feeEstimate,
+          'to accept terms of service for CrowdNode'
+        )
 
         $d.acceptCrowdNodeForm.querySelector('fieldset').disabled = false
       } else {
-
         $d.depositCrowdNodeForm.querySelectorAll('fieldset')
           .forEach(el => el.disabled = false)
 
@@ -199,8 +287,7 @@ async function fundOrInit(addr) {
   }
 }
 
-async function main() {
-
+export default async function main() {
   CrowdNode.init({
     // baseUrl: 'https://app.crowdnode.io',
     // insightBaseUrl: 'https://insight.dash.org',
@@ -214,7 +301,6 @@ async function main() {
   $d.encPrivKey
     .addEventListener('submit', async event => {
       event.preventDefault()
-
 
       passphrase = $d.encPrivKey.passphrase?.value
 
@@ -232,7 +318,6 @@ async function main() {
         const privateKeyExists = await encryptedStore.hasItem('privateKey')
         const privateKey = await encryptedStore.getItem('privateKey')
 
-
         $d.privKeyForm.querySelector('button').disabled = false
 
         if (
@@ -242,15 +327,11 @@ async function main() {
             privateKey !== ''
           )
         ) {
-
           myPrivateKey = await getPrivateKey(privateKey)
-
 
           $d.privKeyForm.privateKey.value = privateKey || myPrivateKey.wif
 
-
           $d.privKeyForm.querySelector('fieldset').disabled = false
-
 
           $d.privKeyForm.querySelector('button').disabled = true
           $d.encPrivKey.querySelector('.error').textContent = ''
@@ -268,8 +349,12 @@ async function main() {
     })
 
 
+
   $d.privKeyForm
-    .addEventListener('input', async event => {
+    .addEventListener('input', async (
+      /** @type {Event & { target: HTMLInputElement}} event */
+      event
+      ) => {
       console.log(
         'change privKeyForm',
         event,
@@ -279,6 +364,8 @@ async function main() {
 
         myPrivateKey?.wif !== $d.privKeyForm.privateKey.value.trim()
       )
+
+      // let target = event.target
 
       if (event.target.name === 'remember') {
         rememberMe = event.target.checked
@@ -338,9 +425,7 @@ async function main() {
     .addEventListener('submit', async event => {
       event.preventDefault()
 
-
       const privateKey = $d.privKeyForm.privateKey?.value?.trim()
-
 
       myPrivateKey = await getPrivateKey(privateKey)
 
@@ -360,14 +445,17 @@ async function main() {
   $d.signupCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-
-    const { main: { hotwallet }, depositMinimum } = CrowdNode;
-
     if (myPrivateKey) {
-      console.log('privKey', myPrivateKey, [hotwallet, depositMinimum])
+      await hasOrRequestFunds(
+        myPrivateKey.addr,
+        signupOnly + feeEstimate,
+        'to signup for CrowdNode'
+      )
+
+      // console.log('privKey', myPrivateKey, hotwallet)
 
       let cnSignup = await CrowdNode.signup(myPrivateKey.wif, hotwallet);
-      console.log('privKey cnSignup', cnSignup)
+      console.log('signupCrowdNodeForm', cnSignup)
 
       $d.signupCrowdNodeForm.querySelector('fieldset').disabled = true
 
@@ -379,14 +467,17 @@ async function main() {
   $d.acceptCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-
-    const { main: { hotwallet }, depositMinimum } = CrowdNode;
-
     if (myPrivateKey) {
-      console.log('privKey', myPrivateKey, [hotwallet, depositMinimum])
+      await hasOrRequestFunds(
+        myPrivateKey.addr,
+        acceptOnly + feeEstimate,
+        'to accept terms of service for CrowdNode'
+      )
+
+      // console.log('privKey', myPrivateKey, hotwallet)
 
       let cnAccept = await CrowdNode.accept(myPrivateKey.wif, hotwallet);
-      console.log('privKey cnAccept', cnAccept)
+      console.log('acceptCrowdNodeForm', cnAccept)
       // if (!cnAccept || cnAccept.accept === 0) {
       //
       //   $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
@@ -406,11 +497,7 @@ async function main() {
   $d.depositCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-
     const amount = $d.depositCrowdNodeForm.amount?.value
-
-
-    const { main: { hotwallet }, depositMinimum } = CrowdNode;
 
     console.log(
       'depositCrowdNodeForm amount',
@@ -424,20 +511,17 @@ async function main() {
       let cnDeposit = await CrowdNode.deposit(
         myPrivateKey.wif,
         hotwallet,
-        toDuff(amount) || false
+        toDuff(amount) || null
       );
 
       console.log(
-        'privKey cnDeposit',
+        'depositCrowdNodeForm deposit res',
         cnDeposit
       )
 
       $d.depositCrowdNodeForm.amount.value = null
 
       await displayBalances(addr)
-
-
-      // $d.balanceForm.submit()
     }
   })
 
