@@ -10,21 +10,31 @@
   <link rel="stylesheet" type="text/css" media="screen" href="index.css">
 </head>
 <body>
-
 <main>
-  <h1>CrowdNode.js UI</h1>
+  <header>
+    <aside class="dash-status">
+      <h3>Dash Wallet</h3>
+      <div class="balance">Balance: </div>
+      <form class="link" name="balanceForm">
+        <fieldset disabled>
+          <button type="submit">🗘 Refresh Balance</button>
+        </fieldset>
+      </form>
+    </aside>
 
-  <form name="encPrivKey">
-    <fieldset>
-      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" />
-      <button type="submit">Encrypt/Decrypt Private Key</button>
-      <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
-      <div class="error"></div>
-    </fieldset>
-  </form>
+    <h1><a href="#">CrowdNode.js UI</a></h1>
+
+    <aside class="cn-status">
+      <h3>CrowdNode</h3>
+      <div class="balance">Balance: </div>
+      <div class="dividends">Dividends: </div>
+    </aside>
+  </header>
+
+  <figure id="funding"></figure>
 
   <form name="privKeyForm">
-    <fieldset disabled>
+    <fieldset>
       <input name="privateKey" placeholder="Ðash Private Key (WIF)" />
       <button type="submit">Use or Generate Private Key</button>
       <label>
@@ -33,11 +43,18 @@
     </fieldset>
   </form>
 
+  <form name="encPrivKey">
+    <fieldset disabled>
+      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" />
+      <button type="submit">Encrypt/Decrypt Private Key</button>
+      <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
+      <div class="error"></div>
+    </fieldset>
+  </form>
+
   <script async>
     document.privKeyForm.remember.checked = JSON.parse(localStorage.getItem('remember'))
   </script>
-
-  <figure id="funding"></figure>
 
   <form name="signupCrowdNodeForm">
     <fieldset disabled>
@@ -47,6 +64,7 @@
 
   <form name="acceptCrowdNodeForm">
     <fieldset disabled>
+      <p>Before using the CrowdNode service, you must accept the <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a></p>
       <button type="submit">Accept CrowdNode TOS for Private Key</button>
     </fieldset>
   </form>
@@ -64,17 +82,6 @@
       <button type="submit">Deposit Funds to CrowdNode</button>
     </fieldset>
   </form>
-
-  <form name="balanceForm">
-    <fieldset disabled>
-      <!-- <input name="address" placeholder="Ðash CrowdNode Address" /> -->
-      <button type="submit">Get Balance</button>
-    </fieldset>
-  </form>
-
-  <p class="balance">
-    <!-- Enter a valid Ðash address above to get the CrowdNode balance. -->
-  </p>
 </main>
 
 <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
