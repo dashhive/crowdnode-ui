@@ -30,7 +30,19 @@ export function buffer8ToString(buf) {
 }
 
 export function stringToBuffer8(str) {
-  return Uint8Array.from([...str].map(ch => ch.charCodeAt())).buffer
+  let ab = new TextEncoder().encode(str);
+  let u8 = new Uint8Array(ab);
+  let hex = u8ToHex(u8);
+}
+  
+export function u8ToHex(u8) {
+  let hex = [];
+  u8.forEach(function (b) {
+    let ch = b.toString(16);
+    let h = ch.padStart(2, '0');
+    hex.push(h);
+  });
+  return hex.join('\n');
 }
 
 /**
