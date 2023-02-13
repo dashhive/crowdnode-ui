@@ -33,6 +33,7 @@ export function stringToBuffer8(str) {
   let ab = new TextEncoder().encode(str);
   let u8 = new Uint8Array(ab);
   let hex = u8ToHex(u8);
+  return hex;
 }
   
 export function u8ToHex(u8) {
