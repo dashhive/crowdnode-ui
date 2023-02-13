@@ -18,11 +18,9 @@ export function bufferToString(buffer) {
 }
 
 export function stringToBuffer(str) {
-  const ab = new Uint16Array(str.length);
-  for (let i = 0; i < str.length; i++) {
-      ab[i] = str.charCodeAt(i);
-  }
-  return ab.buffer;
+  let ab = new TextEncoder().encode(str);
+  let u8 = new Uint8Array(ab);
+  return u8.buffer; // but try to eliminate use of raw buffer, use u8 instead
 }
 
 export function buffer8ToString(buf) {
