@@ -11,6 +11,7 @@ node_modules
 dist
 public
 *.local
+bun.lockb
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +23,4 @@ public
 *.njsproj
 *.sln
 *.sw?
+.env
