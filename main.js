@@ -1,6 +1,6 @@
 import { getEncryptedStorage, } from './CryptStore.js';
 import { qrSvg, } from './qr.js';
-import { toDuff, toDash } from './utils.js'
+import { toDuff, toDash, fixedDASH } from './utils.js'
 import {
   DashKeys,
   DashSight,
@@ -11,6 +11,9 @@ import {
 
 /** @type {document} */
 const $d = document;
+
+/** @type {HTMLDialogElement} */
+let fundingModal
 
 // @ts-ignore
 let dashsight = DashSight.create({
@@ -56,9 +59,9 @@ async function getPrivateKey(wif) {
     '======getPrivateKey======',
     {
       wif,
-      passphrase,
+      // passphrase,
       pkiv: store.getItem(PKIV),
-      ppkiv: !passphrase && !!store.getItem(PKIV)
+      ppkiv: !passphrase && !!store.getItem(PKIV),
     }
   )
 
@@ -116,7 +119,7 @@ async function displayWalletBalance(addr, funds) {
     // let msg = `<p>Đash Wallet balance: Đ ${
     //   walletFunds.balance
     // }</p>`
-    let msg = `<span>Đ ${ walletFunds.balance }</span>`
+    let msg = `<span title="${walletFunds.balance}">${ fixedDASH(walletFunds.balance, 4) }</span>`
 
     $d.querySelector('header .dash-status .balance')
       // .innerHTML = msg
@@ -159,10 +162,16 @@ async function displayCrowdNodeBalance(addr, funds) {
     //   .insertAdjacentHTML('beforeend', msg)
     $d.querySelector('header .cn-status .balance')
       // .innerHTML = `Đ ${ balance.TotalBalance }`
-      .insertAdjacentHTML('beforeend', `<span>Đ ${ balance.TotalBalance }</span>`)
+      .insertAdjacentHTML(
+        'beforeend',
+        `<span title="${balance.TotalBalance}">${ fixedDASH(balance.TotalBalance, 4) }</span>`
+      )
     $d.querySelector('header .cn-status .dividends')
       // .innerHTML = `Đ ${ balance.TotalDividend }`
-      .insertAdjacentHTML('beforeend', `<span>Đ ${ balance.TotalDividend }</span>`)
+      .insertAdjacentHTML(
+        'beforeend',
+        `<span title="${balance.TotalDividend}">${ fixedDASH(balance.TotalDividend, 4) }</span>`
+      )
   }
 
   return balance
@@ -194,7 +203,7 @@ async function displayBalances(addr, funds, cnBalance) {
  * @param {import('dashsight').InstantBalance} currentFunds
  * @param {number} fundsNeeded - in satoshis
  * @param {string} [msg]
- * @returns {string}
+ * @returns {HTMLDialogElement}
  */
 function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
   let dashSvg = qrSvg(
@@ -216,25 +225,35 @@ function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
 
   if (currentFunds.balanceSat > 0) {
     fundingDiff = `
-      <p>You have <strong>Đ ${toDash(currentFunds.balanceSat)}</strong> in your wallet. This step requires <strong>Đ ${toDash(fundsNeeded)}</strong>.</p>
+      <p>You have <strong>Đ ${toDash(currentFunds.balanceSat)}</strong> in your wallet.<br>This step requires <strong>Đ ${toDash(fundsNeeded)}</strong>.</p>
       <p>You must deposit at least <strong>Đ ${toDash(fundsNeeded - currentFunds.balanceSat)}</strong> more Dash ${msg}</p>
     `
   }
 
-  return `
-    <dialog id="fundingModal">
-      <progress class="pending"></progress>
-      <form method="dialog">
-        <h4>Current Wallet Balance: Đ ${currentFunds.balance}</h4>
-        ${dashSvg}
-        <figcaption>
-          <h3>${addr}</h3>
-          ${fundingDiff}
-        </figcaption>
-        <button value="cancel">Close</button>
-      </form>
-    </dialog>
-  `
+  fundingModal = $d.createElement('dialog')
+
+  fundingModal.insertAdjacentHTML('afterbegin', `
+    <progress class="pending"></progress>
+    <form method="dialog">
+      <h4>Current Wallet Balance</h4>
+      <h3>Đ ${currentFunds.balance}</h3>
+      ${dashSvg}
+      <figcaption>
+        <h3>${addr}</h3>
+        ${fundingDiff}
+      </figcaption>
+      <button value="cancel">Close</button>
+    </form>
+  `)
+
+  fundingModal.id = 'fundingModal'
+
+  fundingModal.addEventListener('close', event => {
+    // @ts-ignore
+    event?.target?.remove()
+  })
+
+  return fundingModal
 }
 
 /**
@@ -252,19 +271,30 @@ function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
 async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) {
   let walletFunding
   let walletFunds = await checkWalletFunds(addr)
-  let fundsNeeded = walletFunds.balanceSat < requiredFunds
+  let fees = walletFunds.balanceSat < feeEstimate ?
+    feeEstimate - walletFunds.balanceSat : 0
+  let fundsAndFees = requiredFunds + fees
+  let fundsNeeded = walletFunds.balanceSat < fundsAndFees
 
-  console.log('hasOrRequestFunds', walletFunds.balanceSat, requiredFunds, fundsNeeded)
+  console.log(
+    'hasOrRequestFunds',
+    walletFunds.balanceSat,
+    fundsAndFees,
+    fundsNeeded
+  )
 
   if (fundsNeeded) {
-    $d.getElementById("funding").innerHTML = requestFundsQR(
+    fundingModal = requestFundsQR(
       addr,
       walletFunds,
-      requiredFunds,
+      fundsAndFees,
       msg
     )
 
-    $d.getElementById("fundingModal").showModal();
+    $d.getElementById("funding")
+      .insertAdjacentElement('afterbegin', fundingModal)
+
+    fundingModal?.showModal();
 
     // @ts-ignore
     walletFunding = await DashSocket.waitForVout(
@@ -273,8 +303,8 @@ async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) 
       0,
     )
 
-    if (walletFunding.satoshis < requiredFunds) {
-      await hasOrRequestFunds(addr, requiredFunds, msg)
+    if (walletFunding.satoshis < fundsAndFees) {
+      await hasOrRequestFunds(addr, fundsAndFees, msg)
     }
   }
 
@@ -288,7 +318,7 @@ async function fundOrInit(addr) {
   let walletFunds = await checkWalletFunds(addr)
 
   if (walletFunds.balance === 0) {
-    $d.getElementById("funding").innerHTML = requestFundsQR(
+    fundingModal = requestFundsQR(
       addr,
       walletFunds,
       // 0.00236608,
@@ -296,7 +326,14 @@ async function fundOrInit(addr) {
       'to signup and accept CrowdNode terms'
     )
 
-    $d.getElementById("fundingModal").showModal();
+    $d.getElementById("funding")
+      .insertAdjacentElement('afterbegin', fundingModal)
+
+    // fundingModal = /** @type {HTMLDialogElement} */ (
+    //   $d.getElementById("fundingModal")
+    // )
+
+    fundingModal?.showModal();
 
     // $d.querySelector("#fundingModal").insertAdjacentHTML(
     //   'afterbegin',
@@ -312,8 +349,12 @@ async function fundOrInit(addr) {
     )
 
     if (walletFunding.satoshis > 0) {
-      /** @type {HTMLDialogElement} */
-      $d.getElementById("fundingModal").close()
+
+      // fundingModal = /** @type {HTMLDialogElement} */ (
+      //   $d.getElementById("fundingModal")
+      // )
+      fundingModal?.close()
+      // fundingModal?.remove()
       walletFunds.balance = parseFloat(toDash(walletFunding.satoshis))
       walletFunds.balanceSat = walletFunding.satoshis
     }
@@ -511,14 +552,15 @@ export default async function main() {
 
         store = rememberMe ? localStorage : sessionStorage
 
-        encryptedStore = getEncryptedStorage(
-          store,
-          passphrase,
-          STOREAGE_SALT
-        );
+        if (passphrase) {
+          encryptedStore = getEncryptedStorage(
+            store,
+            passphrase,
+            STOREAGE_SALT
+          );
+        }
       } else {
         if (
-
           myPrivateKey?.wif !== $d.privKeyForm.privateKey?.value?.trim()
         ) {
 
@@ -633,9 +675,13 @@ export default async function main() {
     )
 
     if (myPrivateKey) {
+      let depositAmount = toDuff(amount)
+      if (depositAmount < depositMinimum) {
+        depositAmount = depositMinimum
+      }
       await hasOrRequestFunds(
         myPrivateKey.addr,
-        depositMinimum + feeEstimate,
+        depositAmount,
         ''
       )
 
