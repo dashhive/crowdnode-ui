@@ -22,7 +22,8 @@
   "private": true,
   "main": "index.html",
   "scripts": {
-    "start": "npx sirv-cli --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 5443 ."
+    "start": "npx sirv-cli -D --http2 --key ~/localhost.key.pem --cert ~/localhost.pem -p 5443 .",
+    "http": "npx sirv-cli -p 5453 ."
   },
   "engines": {
     "node": ">=18.0.0"
