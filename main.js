@@ -1,6 +1,6 @@
 import { getEncryptedStorage, } from './CryptStore.js';
 import { qrSvg, } from './qr.js';
-import { toDuff, toDash, fixedDASH } from './utils.js'
+import { toDuff, toDash, fixedDASH, wifToPrivateKey } from './utils.js'
 import {
   DashKeys,
   DashSight,
@@ -24,13 +24,19 @@ let dashsight = DashSight.create({
 
 let rememberMe = JSON.parse(localStorage.getItem('remember'))
 let store = rememberMe ? localStorage : sessionStorage
+let selectedPrivateKey = store.getItem('selectedPrivateKey')
 // let passphrase = window.prompt('Enter a passphrase to encrypt your WIF')
 let passphrase
-let myPrivateKey
+let myKeys
+// let selectedPrivateKey
+let selectedPubKey
 let encryptedStore
 
+let _privateKeys = []
+
 const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
-const PK = 'privateKey'
+const SPK = 'selectedPrivateKey'
+const PK = 'privateKeys'
 const PKIV = 'privateKey_iv'
 
 const { hotwallet } = CrowdNode.main;
@@ -52,40 +58,79 @@ function resetFormFields() {
   $d.balanceForm.querySelector('fieldset').disabled = true
 }
 
-async function getPrivateKey(wif) {
-  let addr
+/**
+ * `getPublicKeysFromWIFS` returns an object with
+ * WIF Private key as the Object keys and
+ * Dash Public Addresses as values
+ *
+ * @param {string[]} wifs
+ * @returns {Promise<Object>}
+ */
+async function getPublicKeysFromWIFS(wifs) {
+  let newPrivateKey
 
   console.warn(
-    '======getPrivateKey======',
+    '======getPublicKeysFromWIFS======',
     {
-      wif,
+      wifs,
       // passphrase,
       pkiv: store.getItem(PKIV),
       ppkiv: !passphrase && !!store.getItem(PKIV),
     }
   )
 
-  if (!passphrase && !!store.getItem(PKIV)) {
+  if (!passphrase && !!JSON.parse(store.getItem(PKIV))) {
     return null
   }
 
-  if (!wif) {
-    wif = await DashKeys.generate();
+  if (!wifs || wifs?.length === 0) {
+    newPrivateKey = await DashKeys.generate();
+    wifs = [newPrivateKey]
+    selectedPrivateKey = newPrivateKey
+  }
+
+  // let addrs = Object.fromEntries(
+  //   Array.from(wifs, w => [w, undefined])
+  // )
+  let addrs = {}
+
+  // for(let wif of wifs) {
+  for(let i=0; i < wifs.length; i++) {
+    let wif = wifs[i]
+    let wifPK
+
+    if (!wif || wif === '') {
+      newPrivateKey = await DashKeys.generate();
+      wif = newPrivateKey
+      wifs[i] = newPrivateKey
+    }
+
+    try {
+      wifPK = await wifToPrivateKey(wif)
+      console.log('wifPK', wif, wifPK)
+    } catch (err) {
+      console.error('wifToPrivateKey Invalid private key WIF', wif)
+    }
+
+    if (wifPK) {
+      try {
+        selectedPrivateKey = selectedPrivateKey || wif
+        addrs[wif] = await DashKeys.wifToAddr(wif);
+      } catch (err) {
+        console.error('Invalid private key WIF', wif)
+      }
+    }
   }
 
   if (passphrase) {
-    encryptedStore.setItem(PK, wif)
+    encryptedStore.setItem(PK, JSON.stringify(wifs))
+    encryptedStore.setItem(SPK, selectedPrivateKey)
   } else {
-    store.setItem(PK, wif)
+    store.setItem(PK, JSON.stringify(wifs))
+    store.setItem(SPK, selectedPrivateKey)
   }
 
-  try {
-    addr = await DashKeys.wifToAddr(wif);
-  } catch (err) {
-    console.error('Invalid private key WIF')
-  }
-
-  return { wif, addr }
+  return { newPrivateKey, addrs }
 }
 
 async function getBalance(address) {
@@ -373,8 +418,11 @@ async function fundOrInit(addr) {
       // $d.depositCrowdNodeForm.amount.max = toDash(toDuff(walletFunds.balance) - CrowdNode.offset)
 
       if (!cnStatus || cnStatus?.signup === 0) {
+        // myKeys.forEach(myPrivateKey => {
+
+        // })
         await hasOrRequestFunds(
-          myPrivateKey.addr,
+          myKeys?.addrs[selectedPrivateKey],
           signupOnly + feeEstimate,
           'to signup for CrowdNode'
         )
@@ -382,7 +430,7 @@ async function fundOrInit(addr) {
         $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
       } else if (cnStatus.signup > 0 && cnStatus.accept === 0) {
         await hasOrRequestFunds(
-          myPrivateKey.addr,
+          myKeys?.addrs[selectedPrivateKey],
           acceptOnly + feeEstimate,
           'to accept terms of service for CrowdNode'
         )
@@ -397,28 +445,26 @@ async function fundOrInit(addr) {
   }
 }
 
-async function loadKey(
-  privateKey,
-  // passphrase,
+async function loadKeys(
+  privateKeys,
 ) {
-  // if (
-  //   // !privateKeyExists ||
-  //   (
-  //     privateKey &&
-  //     privateKey !== ''
-  //   )
-  // ) {
-  myPrivateKey = await getPrivateKey(privateKey)
+  myKeys = await getPublicKeysFromWIFS([...new Set([
+    ..._privateKeys,
+    ...privateKeys
+  ])])
+  selectedPrivateKey = myKeys?.newPrivateKey || selectedPrivateKey
 
-  if (myPrivateKey === null) {
-    // decrypt your key
-    console.warn('your private key is encrypted', myPrivateKey)
+  if (myKeys === null) {
+    console.warn('your private keys are encrypted', myKeys)
     $d.encPrivKey.querySelector('fieldset').disabled = false
     $d.privKeyForm.querySelector('fieldset').disabled = true
     return null
   }
 
-  $d.privKeyForm.privateKey.value = privateKey || myPrivateKey.wif
+  $d.privKeyForm.privateKey.value =
+    privateKeys[selectedPrivateKey] ||
+    privateKeys[Object.keys(privateKeys)[0]] ||
+    selectedPrivateKey
 
   $d.privKeyForm.querySelector('fieldset').disabled = false
 
@@ -430,7 +476,8 @@ async function loadKey(
     $d.encPrivKey.querySelector('fieldset').disabled = false
   }
 
-  await fundOrInit(myPrivateKey.addr)
+  console.warn('myKeys?.addrs[selectedPrivateKey]', myKeys, selectedPrivateKey, myKeys?.addrs[selectedPrivateKey])
+  await fundOrInit(myKeys?.addrs[selectedPrivateKey])
   // }
   // else if (privateKeyExists) {
   //   let errMsg = 'Unable to retrieve private key. Check if your password is correct.'
@@ -450,7 +497,6 @@ export default async function main() {
     dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
     dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
-  let _privateKey
 
   if (passphrase) {
     encryptedStore = getEncryptedStorage(
@@ -458,14 +504,14 @@ export default async function main() {
       passphrase,
       STOREAGE_SALT
     );
-    _privateKey = await encryptedStore.getItem(PK)
+    _privateKeys = JSON.parse(await encryptedStore.getItem(PK)) || []
   } else {
-    _privateKey = await store.getItem(PK)
+    _privateKeys = JSON.parse(await store.getItem(PK)) || []
   }
 
-  loadKey(_privateKey)
+  loadKeys(_privateKeys)
 
-  console.log('un/encrypted private keys', _privateKey)
+  console.log('un/encrypted private keys', _privateKeys)
 
   $d.encPrivKey
     .addEventListener('submit', async event => {
@@ -484,18 +530,18 @@ export default async function main() {
           STOREAGE_SALT
         );
 
-        const privateKeyExists = await encryptedStore.hasItem(PK)
-        const privateKey = await encryptedStore.getItem(PK)
+        const privateKeysExists = await encryptedStore.hasItem(PK)
+        const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
 
-        console.log('encPrivKey form myPrivateKey', {
-          myPrivateKey,
-          privateKeyExists,
-          privateKey
+        console.log('encPrivKey form selectedPrivateKey', {
+          selectedPrivateKey,
+          privateKeysExists,
+          privateKeys
         })
 
         $d.privKeyForm.querySelector('button').disabled = false
 
-        loadKey(myPrivateKey?.wif || privateKey)
+        loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
       }
     })
 
@@ -509,11 +555,11 @@ export default async function main() {
       console.log(
         'change privKeyForm',
         event,
-        myPrivateKey?.wif,
+        selectedPrivateKey,
 
         $d.privKeyForm.privateKey.value,
 
-        myPrivateKey?.wif !== $d.privKeyForm.privateKey.value.trim()
+        selectedPrivateKey !== $d.privKeyForm.privateKey.value.trim()
       )
 
       // let target = event.target
@@ -561,12 +607,10 @@ export default async function main() {
         }
       } else {
         if (
-          myPrivateKey?.wif !== $d.privKeyForm.privateKey?.value?.trim()
+          selectedPrivateKey !== $d.privKeyForm.privateKey?.value?.trim()
         ) {
-
           $d.privKeyForm.querySelector('button').disabled = false
         } else {
-
           $d.privKeyForm.querySelector('button').disabled = true
         }
       }
@@ -579,17 +623,22 @@ export default async function main() {
 
       const privateKey = $d.privKeyForm.privateKey?.value?.trim()
 
-      myPrivateKey = await getPrivateKey(privateKey)
+      myKeys = await getPublicKeysFromWIFS([...new Set([
+        ..._privateKeys,
+        privateKey
+      ])])
+      selectedPrivateKey = privateKey
+      selectedPubKey = myKeys?.addrs[selectedPrivateKey]
 
-      if (myPrivateKey) {
+      if (selectedPubKey) {
         resetFormFields()
-        // console.log('privKey', myPrivateKey)
+        // console.log('privKey', selectedPrivateKey)
 
-        $d.privKeyForm.privateKey.value = myPrivateKey.wif
+        $d.privKeyForm.privateKey.value = selectedPrivateKey
 
         $d.privKeyForm.querySelector('button').disabled = true
 
-        await fundOrInit(myPrivateKey.addr)
+        await fundOrInit(selectedPubKey)
       }
     })
 
@@ -597,21 +646,21 @@ export default async function main() {
   $d.signupCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-    if (myPrivateKey) {
+    if (selectedPrivateKey) {
       await hasOrRequestFunds(
-        myPrivateKey.addr,
+        selectedPrivateKey.addr,
         signupOnly + feeEstimate,
         'to signup for CrowdNode'
       )
 
-      // console.log('privKey', myPrivateKey, hotwallet)
+      // console.log('privKey', selectedPrivateKey, hotwallet)
 
       $d.body.insertAdjacentHTML(
         'afterbegin',
         `<progress id="pageLoader" class="pending"></progress>`,
       )
 
-      let cnSignup = await CrowdNode.signup(myPrivateKey.wif, hotwallet);
+      let cnSignup = await CrowdNode.signup(selectedPrivateKey.wif, hotwallet);
       console.log('signupCrowdNodeForm', cnSignup)
 
       $d.getElementById('pageLoader').remove()
@@ -628,21 +677,21 @@ export default async function main() {
   $d.acceptCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-    if (myPrivateKey) {
+    if (selectedPrivateKey) {
       await hasOrRequestFunds(
-        myPrivateKey.addr,
+        selectedPrivateKey.addr,
         acceptOnly + feeEstimate,
         'to accept terms of service for CrowdNode'
       )
 
-      // console.log('privKey', myPrivateKey, hotwallet)
+      // console.log('privKey', selectedPrivateKey, hotwallet)
 
       $d.body.insertAdjacentHTML(
         'afterbegin',
         `<progress id="pageLoader" class="pending"></progress>`,
       )
 
-      let cnAccept = await CrowdNode.accept(myPrivateKey.wif, hotwallet);
+      let cnAccept = await CrowdNode.accept(selectedPrivateKey.wif, hotwallet);
       console.log('acceptCrowdNodeForm', cnAccept)
 
       $d.getElementById('pageLoader').remove()
@@ -674,18 +723,18 @@ export default async function main() {
       toDuff(amount),
     )
 
-    if (myPrivateKey) {
+    if (selectedPrivateKey) {
       let depositAmount = toDuff(amount)
       if (depositAmount < depositMinimum) {
         depositAmount = depositMinimum
       }
       await hasOrRequestFunds(
-        myPrivateKey.addr,
+        selectedPrivateKey.addr,
         depositAmount,
         ''
       )
 
-      const { addr } = myPrivateKey
+      const { addr } = selectedPrivateKey
 
       $d.getElementById('pageLoader')?.remove()
 
@@ -696,7 +745,7 @@ export default async function main() {
 
       try {
         let cnDeposit = await CrowdNode.deposit(
-          myPrivateKey.wif,
+          selectedPrivateKey.wif,
           hotwallet,
           toDuff(amount) || null
         );
@@ -721,8 +770,8 @@ export default async function main() {
   $d.balanceForm.addEventListener('submit', async event => {
     event.preventDefault()
 
-    if (myPrivateKey) {
-      const { addr } = myPrivateKey
+    if (selectedPrivateKey) {
+      const { addr } = selectedPrivateKey
 
       const { balance } = await displayBalances(addr)
 
