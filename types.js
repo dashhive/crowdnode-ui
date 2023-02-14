@@ -24,4 +24,7 @@
  *  fundingModal?: HTMLDialogElement
  * } & Document} document
  *
+ * @typedef {{
+ *  addrs?: Object<string, string?>
+ * }} PrivateAndPublicKeys
  */
