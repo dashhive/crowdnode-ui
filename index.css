@@ -252,9 +252,6 @@ figure {
   align-items: center;
   text-align: center;
 }
-figure h4 {
-  font-size: 2rem;
-}
 svg {
   max-width: 50%;
   margin: 0 auto;
@@ -443,6 +440,13 @@ dialog#fundingModal {
   border: 0 solid;
   opacity: 1;
   z-index: 9;
+}
+dialog h4 {
+  margin: .5rem auto;
+}
+dialog h4 + h3 {
+  font-size: 2rem;
+  margin-top: .5rem;
 }
 
 
