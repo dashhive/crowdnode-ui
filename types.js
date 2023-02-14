@@ -21,6 +21,7 @@
  *  depositCrowdNodeForm?: HTMLElement & { amount?: HTMLInputElement };
  *  privKeyForm?: HTMLElement & { privateKey?: HTMLInputElement };
  *  balanceForm?: HTMLElement;
+ *  fundingModal?: HTMLDialogElement
  * } & Document} document
  *
  */
