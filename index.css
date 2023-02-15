@@ -41,10 +41,16 @@
 
 @media (prefers-color-scheme: light) {
   html:not(.it),img,svg,video,html:not(.it) dialog {
+  /* html:not(.it),img,svg,video { */
     filter: invert(95%) hue-rotate(180deg);
   }
   progress:indeterminate {
-    background: linear-gradient(90deg, #0000 0%, var(--lite) 50%, #0000 100%);
+    background: linear-gradient(
+      90deg,
+      #0000 0%,
+      #0000 50%,
+      var(--lite) 100%
+    );
   }
   nav a.theme::before {
     content: '🌣';
@@ -55,10 +61,16 @@
 }
 @media (prefers-color-scheme: dark) {
   html.it,img,svg,video,html.it dialog {
+  /* html.it,img,svg,video { */
     filter: invert(95%) hue-rotate(180deg);
   }
   progress:indeterminate {
-    background: linear-gradient(90deg, transparent 0%, var(--info) 50%, transparent 100%);
+    background: linear-gradient(
+      90deg,
+      #0000 0%,
+      #0000 50%,
+      var(--info) 100%
+    );
   }
   nav a.theme::before {
     content: '☽';
@@ -276,6 +288,25 @@ label > input[type=checkbox] {
 fieldset:not(:disabled) label {
   cursor: pointer;
 }
+form fieldset.inline {
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: stretch;
+  gap: 0;
+  padding: 0;
+  height: 48px;
+}
+form fieldset.inline input {
+  border-right: 0 solid transparent;
+  outline: none;
+}
+form fieldset.inline button {
+  border: 1px solid var(--hc);
+}
+
+
 table {
   width: 100%;
   table-layout: fixed;
@@ -451,6 +482,8 @@ progress.pending[role] {
   border: none;
   background-color: transparent;
   background-size: auto;
+  background-repeat: no-repeat;
+  background-position: 0 0;
 	appearance: none;
 	-moz-appearance: none;
 	-webkit-appearance: none;
@@ -464,8 +497,8 @@ progress.pending:indeterminate::-webkit-progress-bar {
 }
 
 progress.pending:indeterminate {
-  -webkit-animation: await-progress 2s linear infinite;
-  animation: await-progress 2s linear infinite;
+  -webkit-animation: await-progress 1.5s ease-in-out infinite;
+  animation: await-progress 1.5s ease-in-out infinite;
 }
 
 progress#pageLoader,
@@ -478,17 +511,17 @@ progress#pageLoader[role] {
 }
 
 progress#pageLoader:indeterminate {
-  -webkit-animation: await-page-progress 2s linear infinite;
-  animation: await-page-progress 2s linear infinite;
+  -webkit-animation: await-page-progress 1.5s ease-in-out infinite;
+  animation: await-page-progress 1.5s ease-in-out infinite;
 }
 
 @-webkit-keyframes await-progress {
-  0%   { background-position: 0; }
-  100% { background-position: 40vw; }
+  0%   { background-position: -100vw; }
+  100% { background-position: 100vw; }
 }
 @keyframes await-progress {
-  0%   { background-position: 0; }
-  100% { background-position: 40vw; }
+  0%   { background-position: -100vw; }
+  100% { background-position: 100vw; }
 }
 
 @-webkit-keyframes await-page-progress {
@@ -506,23 +539,23 @@ dialog {
 }
 dialog::backdrop {
   background: var(--ct);
-  /* background: repeating-linear-gradient(
-    45deg,
-    rgba(255, 0, 0, 0.2),
-    rgba(255, 0, 0, 0.2) 1px,
-    rgba(255, 0, 0, 0.3) 1px,
-    rgba(255, 0, 0, 0.3) 20px
-  ); */
 }
 
 dialog#fundingModal {
   position: fixed;
-  /* top: 0px;
-  height: 90vh; */
-  width: 40vw;
+  display: flex;
+  /* top: 0; */
+  top: 3rem;
+  bottom: 0;
+  height: auto;
+  /* height: 100vh; */
+  width: 100vw;
+  max-height: 100%;
+  max-width: 100%;
   border: 0 solid;
   opacity: 1;
   z-index: 9;
+  padding: 2rem;
 }
 dialog h4 {
   margin: .5rem auto;
@@ -531,10 +564,46 @@ dialog h4 + h3 {
   font-size: 2rem;
   margin-top: .5rem;
 }
+dialog form {
+  max-width: 100%;
+  width: 100%;
+  flex: 1 1 auto;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+dialog figure {
+  margin: 0;
+  flex: 1 1 auto;
+}
+/* dialog figure figcaption {
+  line-break: anywhere;
+} */
+dialog figure figcaption input {
+  font-size: 3.25vmin;
+}
+dialog svg {
+  max-width: 75%;
+  margin: auto;
+}
 
 
 
 @media (min-width: 650px) {
+  @-webkit-keyframes await-progress {
+    0%   {
+      background-position: -650px;
+    }
+    100% {
+      background-position: 650px;
+    }
+  }
+  @keyframes await-progress {
+    0%   { background-position: -650px; }
+    100% { background-position: 650px; }
+  }
+
   form {
     max-width: 80%;
   }
@@ -559,5 +628,31 @@ dialog h4 + h3 {
     height: auto;
     overflow: auto;
     flex-direction: row;
+  }
+
+  dialog#fundingModal {
+    position: fixed;
+    top: 0px;
+    /* height: 90vh; */
+    height: fit-content;
+    max-width: 650px;
+    border: 0 solid;
+    opacity: 1;
+    z-index: 9;
+  }
+  dialog h4 {
+    margin: 1rem auto;
+  }
+  dialog h4 + h3 {
+    font-size: 3rem;
+    margin-top: 1rem;
+  }
+  dialog figure figcaption input {
+    /* margin-top: 1rem; */
+    font-size: 1.4rem;
+  }
+  dialog svg {
+    max-width: 60%;
+    margin: 1rem auto 2rem;
   }
 }

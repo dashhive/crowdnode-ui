@@ -278,17 +278,24 @@ function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
   fundingModal = $d.createElement('dialog')
 
   fundingModal.insertAdjacentHTML('afterbegin', `
-    <progress class="pending"></progress>
-    <form method="dialog">
-      <h4>Current Wallet Balance</h4>
-      <h3>Đ ${currentFunds.balance}</h3>
-      ${dashSvg}
-      <figcaption>
-        <h3>${addr}</h3>
-        ${fundingDiff}
-      </figcaption>
-      <button value="cancel">Close</button>
-    </form>
+    <figure>
+      <progress class="pending"></progress>
+      <form name="qrCopyAddr">
+        <h4>Current Wallet Balance</h4>
+        <h3>Đ ${currentFunds.balance}</h3>
+        ${dashSvg}
+        <figcaption>
+          <fieldset class="inline">
+            <input name="qrAddr" value="${addr}" spellcheck="false" />
+            <button>📋</button>
+          </fieldset>
+          ${fundingDiff}
+        </figcaption>
+      </form>
+      <form method="dialog">
+        <button value="cancel">Close</button>
+      </form>
+    </figure>
   `)
 
   fundingModal.id = 'fundingModal'
@@ -336,9 +343,13 @@ async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) 
       msg
     )
 
-    $d.getElementById("funding")
-      .insertAdjacentElement('afterbegin', fundingModal)
+    $d.querySelector("main")
+      .insertAdjacentElement('afterend', fundingModal)
 
+    $d.querySelector('form[name=qrCopyAddr] button')
+      .addEventListener('click', copyToClipboard)
+
+    // fundingModal?.show();
     fundingModal?.showModal();
 
     // @ts-ignore
@@ -359,6 +370,13 @@ async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) 
   }
 }
 
+function copyToClipboard(event) {
+  event.preventDefault()
+  // let copyText = document.querySelector(sel);
+  event.target.previousElementSibling.select();
+  document.execCommand("copy");
+}
+
 async function fundOrInit(addr) {
   let walletFunds = await checkWalletFunds(addr)
 
@@ -371,13 +389,17 @@ async function fundOrInit(addr) {
       'to signup and accept CrowdNode terms'
     )
 
-    $d.getElementById("funding")
-      .insertAdjacentElement('afterbegin', fundingModal)
+    $d.querySelector("main")
+      .insertAdjacentElement('afterend', fundingModal)
+
+    $d.querySelector('form[name=qrCopyAddr] button')
+      .addEventListener('click', copyToClipboard)
 
     // fundingModal = /** @type {HTMLDialogElement} */ (
     //   $d.getElementById("fundingModal")
     // )
 
+    // fundingModal?.show();
     fundingModal?.showModal();
 
     // $d.querySelector("#fundingModal").insertAdjacentHTML(
