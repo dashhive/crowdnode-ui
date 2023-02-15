@@ -46,11 +46,9 @@
     </aside>
   </header>
 
-  <figure id="funding"></figure>
-
   <form name="privKeyForm">
     <fieldset>
-      <input name="privateKey" placeholder="Ðash Private Key (WIF)" />
+      <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
       <button type="submit">Use or Generate Private Key</button>
       <label>
         <input type="checkbox" name="remember" /> Remember Private Key
@@ -60,7 +58,7 @@
 
   <form name="encPrivKey">
     <fieldset disabled>
-      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" />
+      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" spellcheck="false" />
       <button type="submit">Encrypt/Decrypt Private Key</button>
       <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
       <div class="error"></div>
