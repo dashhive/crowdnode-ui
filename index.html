@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CrowdNode.js UI</title>
   <script>
-  if (localStorage.getItem('invert')){document.documentElement.classList.add('it')}
+  if (JSON.parse(localStorage.getItem('invert'))) {
+    document.documentElement.classList.add('it')
+  }
   </script>
   <link rel="stylesheet" type="text/css" media="screen" href="index.css">
 </head>
 <body>
+<nav>
+  <a class="brand" href="#home">CrowdNode.js UI</a>
+  <div class="menu" id="home">
+    <a class="dashboard" href="#dashboard">Dashboard</a>
+    <a class="wallet" href="#wallet">Wallets / Keys</a>
+    <a class="staking" href="#staking">Staking</a>
+  </div>
+  <div class="settings" id="settings">
+    <a class="theme" href="#theme" title="Invert Theme"></a>
+    <a class="settings" href="#settings" title="Settings">⚙️</a>
+  </div>
+</nav>
+
 <main>
   <header>
     <aside class="dash-status">
@@ -22,7 +37,7 @@
       </form>
     </aside>
 
-    <h1><a href="#">CrowdNode.js UI</a></h1>
+    <!-- <h1><a href="#">CrowdNode.js UI</a></h1> -->
 
     <aside class="cn-status">
       <h3>CrowdNode</h3>
@@ -84,6 +99,22 @@
   </form>
 </main>
 
+
+<script async>
+  (function invertTheme(selector) {
+    let theme = JSON.parse(localStorage.getItem('invert'))
+
+    if (selector) {
+      document.querySelector(selector)
+        .addEventListener('click', event => {
+          event.preventDefault()
+          theme = !theme
+          localStorage.setItem('invert', theme)
+          document.documentElement.classList.toggle('it')
+        })
+    }
+  })('nav a.theme')
+</script>
 <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
 <script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
 <script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>

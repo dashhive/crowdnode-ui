@@ -40,15 +40,31 @@
 * { box-sizing: border-box; }
 
 @media (prefers-color-scheme: light) {
-  html:not(.it),img,svg,video,dialog { filter: invert(95%) hue-rotate(180deg); }
+  html:not(.it),img,svg,video,html:not(.it) dialog {
+    filter: invert(95%) hue-rotate(180deg);
+  }
   progress:indeterminate {
     background: linear-gradient(90deg, #0000 0%, var(--lite) 50%, #0000 100%);
   }
+  nav a.theme::before {
+    content: '🌣';
+  }
+  html:not(.it) nav a.theme::before {
+    content: '☽';
+  }
 }
 @media (prefers-color-scheme: dark) {
-  html.it,img,svg,video { filter: invert(95%) hue-rotate(180deg); }
+  html.it,img,svg,video,html.it dialog {
+    filter: invert(95%) hue-rotate(180deg);
+  }
   progress:indeterminate {
     background: linear-gradient(90deg, transparent 0%, var(--info) 50%, transparent 100%);
+  }
+  nav a.theme::before {
+    content: '☽';
+  }
+  html:not(.it) nav a.theme::before {
+    content: '🌣';
   }
 }
 
@@ -62,6 +78,73 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+nav {
+  display: flex;
+  flex-direction: row;
+  /* flex: 1 1 auto; */
+  width: 100%;
+  justify-content: space-between;
+  line-height: 2;
+
+  background-color: var(--bgc);
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  width: 100%;
+  height: auto;
+}
+
+/*
+  Hover disables browser navigation
+  Needs alternative solution / debugging
+*/
+/* nav:hover > #home:not(:target), */
+/* nav a:first-child:hover ~ #home,
+nav > #home:hover, */
+nav > #home:target {
+  right: 0;
+}
+
+nav > div {
+  display: flex;
+  line-height: 2;
+}
+
+nav > #home {
+  background-color: var(--bgc);
+  position: absolute;
+  top: 3rem;
+  right: 100%;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+nav a {
+  display: flex;
+  height: 3rem;
+  line-height: 3;
+  padding: 0 1rem;
+  flex: 0 0 auto;
+}
+
+nav a:hover {
+  color: var(--fc);
+  text-decoration: none;
+}
+
+nav #home a:hover {
+  background-color: var(--c);
+}
+
+nav a.theme {
+  font-weight: bolder;
+  font-size: 1.5rem;
+  line-height: 2.2;
+}
+
 header {
   margin: 0 auto;
   padding: 0 2rem;
@@ -456,6 +539,25 @@ dialog h4 + h3 {
     max-width: 80%;
   }
   header {
+    flex-direction: row;
+  }
+
+  nav {
+    position: relative;
+    top: auto;
+    overflow: hidden;
+  }
+
+  nav > div {
+    flex-direction: row;
+  }
+
+  nav > #home {
+    position: relative;
+    top: auto;
+    right: auto;
+    height: auto;
+    overflow: auto;
     flex-direction: row;
   }
 }
