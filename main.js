@@ -2,11 +2,16 @@ import { getEncryptedStorage, } from './CryptStore.js';
 import { qrSvg, } from './qr.js';
 import { toDuff, toDash, fixedDASH, wifToPrivateKey } from './utils.js'
 import {
+  DashHd,
+  DashPhrase,
   DashKeys,
   DashSight,
   DashSocket,
   DashApi,
-  CrowdNode
+  Secp256k1,
+  Base58Check,
+  RIPEMD160,
+  CrowdNode,
 } from './imports.js'
 
 /** @type {document} */
@@ -31,13 +36,21 @@ let myKeys
 // let selectedPrivateKey
 let selectedPubKey
 let encryptedStore
+let currentPage
 
 let _privateKeys = []
 
 const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
-const SPK = 'selectedPrivateKey'
+const SK = 'selectedKey'
 const PK = 'privateKeys'
-const PKIV = 'privateKey_iv'
+const PKIV = 'privateKeys_iv'
+const KEY_PREFIX = 'dk__'
+const ENCRYPT_IV = 'encryptage'
+
+const PAGE_DASH = 'dashboard'
+const PAGE_WALLET = 'wallet'
+const PAGE_STAKE = 'staking'
+const PAGE_SETTINGS = 'settings'
 
 const { hotwallet } = CrowdNode.main;
 const { depositMinimum, stakeMinimum } = CrowdNode
@@ -56,6 +69,64 @@ function resetFormFields() {
   $d.depositCrowdNodeForm.querySelectorAll('fieldset')
     .forEach(el => el.disabled = true)
   $d.balanceForm.querySelector('fieldset').disabled = true
+}
+
+async function generateRecoveryPhrase() {
+  let targetBitEntropy = 128;
+  let secretSalt = ''; // "TREZOR";
+  let recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
+  let seed = await DashPhrase.toSeed(recoveryPhrase, secretSalt);
+  let wallet = await DashHd.fromSeed(seed);
+  let accountIndex = 0;
+  let account = await wallet.deriveAccount(accountIndex);
+  let use = DashHd.RECEIVE;
+  let xkey = await account.deriveXKey(use);
+  let xprv = await DashHd.toXPrv(xkey);
+  let xpub = await DashHd.toXPub(xkey);
+  let key = await xkey.deriveAddress(use);
+  let wif = await DashHd.toWif(key.privateKey);
+  let address = await DashHd.toAddr(key.publicKey);
+
+  return {
+    recoveryPhrase,
+    seed,
+    wallet,
+    account,
+    xkey,
+    xprv,
+    xpub,
+    wif,
+    address
+  }
+}
+
+async function getStoredKeys(pass) {
+  let keys = []
+  let $s = store
+
+  if (pass) {
+    $s = encryptedStore
+  }
+
+  for(let key in $s) {
+    if (key.startsWith(KEY_PREFIX)) {
+      // console.log('sess store', itm)
+      keys.push([key.split(KEY_PREFIX)[1], await $s.getItem(key)])
+    }
+  }
+
+  return keys
+}
+
+async function storeKeys(keys) {
+  let $s = store
+
+  if (passphrase) {
+    $s = encryptedStore
+  }
+
+  $s.setItem(`${KEY_PREFIX}${keys.address}`, keys.wif)
+  $s.setItem(SK, keys.address)
 }
 
 /**
@@ -84,7 +155,7 @@ async function getPublicKeysFromWIFS(wifs) {
   }
 
   if (!wifs || wifs?.length === 0) {
-    newPrivateKey = await DashKeys.generate();
+    newPrivateKey = await DashKeys.utils.generateWifNonHd()
     wifs = [newPrivateKey]
     selectedPrivateKey = newPrivateKey
   }
@@ -100,7 +171,7 @@ async function getPublicKeysFromWIFS(wifs) {
     let wifPK
 
     if (!wif || wif === '') {
-      newPrivateKey = await DashKeys.generate();
+      newPrivateKey = await DashKeys.utils.generateWifNonHd()
       wif = newPrivateKey
       wifs[i] = newPrivateKey
     }
@@ -124,11 +195,13 @@ async function getPublicKeysFromWIFS(wifs) {
 
   if (passphrase) {
     encryptedStore.setItem(PK, JSON.stringify(wifs))
-    encryptedStore.setItem(SPK, selectedPrivateKey)
+    encryptedStore.setItem(SK, selectedPrivateKey)
   } else {
     store.setItem(PK, JSON.stringify(wifs))
-    store.setItem(SPK, selectedPrivateKey)
+    store.setItem(SK, selectedPrivateKey)
   }
+
+  console.log('wifs & pub addrs', addrs)
 
   return { newPrivateKey, addrs }
 }
@@ -220,6 +293,33 @@ async function displayCrowdNodeBalance(addr, funds) {
   }
 
   return balance
+}
+
+function balanceEl(balance, dec = 4) {
+  return `<span title="${balance}">${ fixedDASH(balance, dec) }</span>`
+}
+
+async function displayAddressBalance(addr, funds) {
+  let walletFunds = funds || await checkWalletFunds(addr)
+
+  if (walletFunds) {
+    return balanceEl(walletFunds.balance)
+  }
+
+  return balanceEl(0)
+}
+
+async function displayCNAddrBalance(addr, funds) {
+  let balance = funds || await getBalance(addr)
+
+  if (balance?.TotalBalance) {
+    return `
+      ${balanceEl(balance.TotalBalance)}
+      ${balanceEl(balance.TotalDividend)}
+    `
+  }
+
+  return balanceEl(0)
 }
 
 async function displayBalances(addr, funds, cnBalance) {
@@ -510,7 +610,42 @@ async function loadKeys(
   // }
 }
 
+export async function getAddrRows(keys) {
+  let rows = []
+
+  for (let [pub, priv] of keys) {
+    displayAddressBalance(pub)
+      .then(b => {
+        $d.getElementById(`da_${pub}`).innerHTML = b
+      })
+    displayCNAddrBalance(pub)
+      .then(b => {
+        $d.getElementById(`cn_${pub}`).innerHTML = b
+      })
+
+    rows.push(`
+      <tr>
+        <td>
+          <strong>${pub}</strong><br/>
+          <em>${priv}</em>
+        </td>
+        <td id="da_${pub}"></td>
+        <td id="cn_${pub}"></td>
+      </tr>
+    `)
+  }
+
+  return rows.join('\n')
+}
+
 export default async function main() {
+  currentPage = location.pathname.slice(1) || 'onboarding'
+  console.log('main location', currentPage, location.hash, location.search)
+
+  let pageEl = $d.querySelector(`section.page#${currentPage}`)
+
+  pageEl?.classList.add('active')
+
   CrowdNode.init({
     // baseUrl: 'https://app.crowdnode.io',
     // insightBaseUrl: 'https://insight.dash.org',
@@ -520,18 +655,33 @@ export default async function main() {
     dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
 
-  if (passphrase) {
-    encryptedStore = getEncryptedStorage(
-      store,
-      passphrase,
-      STOREAGE_SALT
-    );
-    _privateKeys = JSON.parse(await encryptedStore.getItem(PK)) || []
-  } else {
-    _privateKeys = JSON.parse(await store.getItem(PK)) || []
+  // console.log('store.getItem(PKIV)', store.getItem(PKIV), !!store.getItem(PKIV))
+  // if (passphrase) {
+  //   encryptedStore = await getEncryptedStorage(
+  //     store,
+  //     passphrase,
+  //     STOREAGE_SALT,
+  //     ENCRYPT_IV
+  //   );
+  //   _privateKeys = JSON.parse(await encryptedStore.getItem(PK)) || []
+  // } else if (!store.getItem(PKIV)) {
+  //   _privateKeys = JSON.parse(await store.getItem(PK)) || []
+  // }
+
+  _privateKeys = await getStoredKeys()
+
+  if (currentPage === PAGE_WALLET) {
+    console.info('ON PAGE:', PAGE_WALLET)
+    // let keys = await getStoredKeys()
+    let addrRows = await getAddrRows(_privateKeys)
+
+    console.info('WALLET ROWS', _privateKeys)
+
+    $d.querySelector('#addressList tbody')
+      .insertAdjacentHTML('afterbegin', addrRows)
   }
 
-  loadKeys(_privateKeys)
+  // loadKeys(_privateKeys)
 
   console.log('un/encrypted private keys', _privateKeys)
 
@@ -541,33 +691,99 @@ export default async function main() {
 
       passphrase = $d.encPrivKey.passphrase?.value
 
+      const storedKeys = await getStoredKeys()
+      const isStoreEncrypted = await store.getItem(`${ENCRYPT_IV}_iv`)
+
       if (passphrase) {
         // console.log('passphrase', passphrase)
 
         $d.encPrivKey.passphrase.value = ''
 
-        encryptedStore = getEncryptedStorage(
+        encryptedStore = encryptedStore || await getEncryptedStorage(
           store,
           passphrase,
-          STOREAGE_SALT
+          STOREAGE_SALT,
+          ENCRYPT_IV
         );
 
-        const privateKeysExists = await encryptedStore.hasItem(PK)
-        const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
+        // const privateKeysExists = await encryptedStore.hasItem(`${ENCRYPT_IV}_iv`)
+
+        // const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
 
         console.log('encPrivKey form selectedPrivateKey', {
           selectedPrivateKey,
-          privateKeysExists,
-          privateKeys
+          storedKeys,
+          isStoreEncrypted,
+          // privateKeysExists,
+          // privateKeys
         })
 
         $d.privKeyForm.querySelector('button').disabled = false
 
-        loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
+        // loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
       }
     })
 
+  $d.encryptWallet
+    .addEventListener('submit', async event => {
+      event.preventDefault()
 
+      // @ts-ignore
+      passphrase = event.target.passphrase?.value
+
+      const storedKeys = await getStoredKeys()
+      const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
+
+      if (passphrase) {
+        // console.log('passphrase', passphrase)
+
+        // @ts-ignore
+        event.target.passphrase.value = ''
+
+        encryptedStore = encryptedStore || await getEncryptedStorage(
+          store,
+          passphrase,
+          STOREAGE_SALT,
+          ENCRYPT_IV
+        );
+
+        const decryptedStoredKeys = await getStoredKeys(passphrase)
+
+        for (let [address, wif] of storedKeys) {
+          if (wif.length < 53) {
+            console.log('stored key', address, wif.length)
+            storeKeys({ address, wif })
+          }
+        }
+
+        let addrRows = await getAddrRows(decryptedStoredKeys)
+
+        // console.info('WALLET ROWS', storedKeys, addrRows)
+
+        $d.querySelector('#addressList tbody').innerHTML = addrRows
+
+        // storeKeys()
+
+        // const privateKeysExists = await encryptedStore.hasItem(`${ENCRYPT_IV}_iv`)
+
+        // const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
+
+        console.log('encryptWallet form selectedPrivateKey', {
+          selectedPrivateKey,
+          storedKeys,
+          decryptedStoredKeys,
+          isStoreEncrypted,
+          el: decryptedStoredKeys.length,
+          ul: storedKeys.length,
+          // privateKeysExists,
+          // privateKeys
+        })
+
+        $d.privKeyForm.querySelector('button').disabled = false
+
+        // loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
+      }
+    })
 
   $d.privKeyForm
     .addEventListener('input', async (
@@ -621,10 +837,11 @@ export default async function main() {
         store = rememberMe ? localStorage : sessionStorage
 
         if (passphrase) {
-          encryptedStore = getEncryptedStorage(
+          encryptedStore = await getEncryptedStorage(
             store,
             passphrase,
-            STOREAGE_SALT
+            STOREAGE_SALT,
+            ENCRYPT_IV
           );
         }
       } else {
@@ -665,6 +882,41 @@ export default async function main() {
     })
 
 
+  $d.generatePrivKeyForm
+    .addEventListener('submit', async event => {
+      event.preventDefault()
+
+      // const privateKey = $d.privKeyForm.privateKey?.value?.trim()
+
+      // Generate the new Public & Private Keys
+      myKeys = await generateRecoveryPhrase()
+      // Store new keys in localStorage
+      storeKeys(myKeys)
+      let storedKeys = await getStoredKeys()
+      let addrRows = await getAddrRows(storedKeys)
+
+      // console.info('WALLET ROWS', storedKeys, addrRows)
+
+      $d.querySelector('#addressList tbody').innerHTML = addrRows
+      // $d.querySelector('#addressList tbody')
+      //   .insertAdjacentHTML('afterbegin', addrRows)
+
+      console.log('generateRecoveryPhrase', myKeys, storedKeys)
+      // selectedPrivateKey = privateKey
+      // selectedPubKey = myKeys?.addrs[selectedPrivateKey]
+
+      // if (selectedPubKey) {
+      //   resetFormFields()
+      //   // console.log('privKey', selectedPrivateKey)
+
+      //   $d.privKeyForm.privateKey.value = selectedPrivateKey
+
+      //   $d.privKeyForm.querySelector('button').disabled = true
+
+      //   await fundOrInit(selectedPubKey)
+      // }
+    })
+
   $d.signupCrowdNodeForm.addEventListener('submit', async event => {
     event.preventDefault()
 
@@ -682,8 +934,10 @@ export default async function main() {
         `<progress id="pageLoader" class="pending"></progress>`,
       )
 
-      let cnSignup = await CrowdNode.signup(selectedPrivateKey.wif, hotwallet);
+      let cnSignup = await CrowdNode.signup(selectedPrivateKey, hotwallet);
       console.log('signupCrowdNodeForm', cnSignup)
+      let cnAccept = await CrowdNode.accept(selectedPrivateKey, hotwallet);
+      console.log('acceptCrowdNodeForm', cnAccept)
 
       $d.getElementById('pageLoader').remove()
 
@@ -696,42 +950,42 @@ export default async function main() {
   })
 
 
-  $d.acceptCrowdNodeForm.addEventListener('submit', async event => {
-    event.preventDefault()
+  // $d.acceptCrowdNodeForm.addEventListener('submit', async event => {
+  //   event.preventDefault()
 
-    if (selectedPrivateKey) {
-      await hasOrRequestFunds(
-        selectedPrivateKey.addr,
-        acceptOnly + feeEstimate,
-        'to accept terms of service for CrowdNode'
-      )
+  //   if (selectedPrivateKey) {
+  //     await hasOrRequestFunds(
+  //       selectedPrivateKey.addr,
+  //       acceptOnly + feeEstimate,
+  //       'to accept terms of service for CrowdNode'
+  //     )
 
-      // console.log('privKey', selectedPrivateKey, hotwallet)
+  //     // console.log('privKey', selectedPrivateKey, hotwallet)
 
-      $d.body.insertAdjacentHTML(
-        'afterbegin',
-        `<progress id="pageLoader" class="pending"></progress>`,
-      )
+  //     $d.body.insertAdjacentHTML(
+  //       'afterbegin',
+  //       `<progress id="pageLoader" class="pending"></progress>`,
+  //     )
 
-      let cnAccept = await CrowdNode.accept(selectedPrivateKey.wif, hotwallet);
-      console.log('acceptCrowdNodeForm', cnAccept)
+  //     let cnAccept = await CrowdNode.accept(selectedPrivateKey.wif, hotwallet);
+  //     console.log('acceptCrowdNodeForm', cnAccept)
 
-      $d.getElementById('pageLoader').remove()
+  //     $d.getElementById('pageLoader').remove()
 
-      // if (!cnAccept || cnAccept.accept === 0) {
-      //
-      //   $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
-      // } else {
+  //     // if (!cnAccept || cnAccept.accept === 0) {
+  //     //
+  //     //   $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
+  //     // } else {
 
-        $d.acceptCrowdNodeForm.querySelector('fieldset').disabled = true
+  //       $d.acceptCrowdNodeForm.querySelector('fieldset').disabled = true
 
-        $d.depositCrowdNodeForm.querySelectorAll('fieldset')
-          .forEach(el => el.disabled = false)
+  //       $d.depositCrowdNodeForm.querySelectorAll('fieldset')
+  //         .forEach(el => el.disabled = false)
 
-        $d.balanceForm.querySelector('fieldset').disabled = false
-      // }
-    }
-  })
+  //       $d.balanceForm.querySelector('fieldset').disabled = false
+  //     // }
+  //   }
+  // })
 
 
   $d.depositCrowdNodeForm.addEventListener('submit', async event => {

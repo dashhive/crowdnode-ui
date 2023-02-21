@@ -13,15 +13,15 @@
 </head>
 <body>
 <nav>
-  <a class="brand" href="#home">CrowdNode.js UI</a>
+  <a class="brand" href="/#home">CrowdNode.js UI</a>
   <div class="menu" id="home">
-    <a class="dashboard" href="#dashboard">Dashboard</a>
-    <a class="wallet" href="#wallet">Wallets / Keys</a>
-    <a class="staking" href="#staking">Staking</a>
+    <a class="dashboard" href="/dashboard">Dashboard</a>
+    <a class="wallet" href="/wallet">Wallet</a>
+    <a class="staking" href="/staking">Staking</a>
   </div>
   <div class="settings" id="settings">
     <a class="theme" href="#theme" title="Invert Theme"></a>
-    <a class="settings" href="#settings" title="Settings">⚙️</a>
+    <a class="settings" href="/settings" title="Settings">⚙️</a>
   </div>
 </nav>
 
@@ -46,55 +46,140 @@
     </aside>
   </header>
 
-  <form name="privKeyForm">
-    <fieldset>
-      <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
-      <button type="submit">Use or Generate Private Key</button>
-      <label>
-        <input type="checkbox" name="remember" /> Remember Private Key
-      </label>
-    </fieldset>
-  </form>
+  <section class="page" id="onboarding">
+    <form name="privKeyForm">
+      <fieldset>
+        <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
+        <button type="submit">Use or Generate Private Key</button>
+        <label>
+          <input type="checkbox" name="remember" /> Remember Private Key
+        </label>
+      </fieldset>
 
-  <form name="encPrivKey">
-    <fieldset disabled>
-      <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" spellcheck="false" />
-      <button type="submit">Encrypt/Decrypt Private Key</button>
-      <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
-      <div class="error"></div>
-    </fieldset>
-  </form>
+      <script defer async>
+        document.privKeyForm.remember.checked = JSON.parse(localStorage.getItem('remember'))
+      </script>
+    </form>
 
-  <script async>
-    document.privKeyForm.remember.checked = JSON.parse(localStorage.getItem('remember'))
-  </script>
+    <form name="encPrivKey">
+      <fieldset disabled>
+        <input type="password" name="passphrase" placeholder="Enter your encrypted private key passphrase" minlength="1" spellcheck="false" />
+        <button type="submit">Encrypt/Decrypt Private Key</button>
+        <p>Enter a password which will encrypt/decrypt your Private Key (WIF).</p>
+        <div class="error"></div>
+      </fieldset>
+    </form>
 
-  <form name="signupCrowdNodeForm">
-    <fieldset disabled>
-      <button type="submit">Signup for CrowdNode for Private Key</button>
-    </fieldset>
-  </form>
+    <form name="signupCrowdNodeForm">
+      <fieldset disabled>
+        <label for="acceptToS">
+          <input name="acceptToS" type="checkbox" />
+          I accept the CrowdNode <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a>
+        </label>
+        <button type="submit">Signup for CrowdNode</button>
+      </fieldset>
+    </form>
 
-  <form name="acceptCrowdNodeForm">
-    <fieldset disabled>
-      <p>Before using the CrowdNode service, you must accept the <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a></p>
-      <button type="submit">Accept CrowdNode TOS for Private Key</button>
-    </fieldset>
-  </form>
+    <!-- <form name="acceptCrowdNodeForm">
+      <fieldset disabled>
+        <p>Before using the CrowdNode service, you must accept the <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a></p>
+        <button type="submit">Accept CrowdNode TOS for Private Key</button>
+      </fieldset>
+    </form> -->
+  </section>
+  <section class="page" id="dashboard">
+    <form name="depositCrowdNodeForm">
+      <fieldset disabled>
+        <input
+          type="number"
+          name="amount"
+          step="0.00000001"
+          placeholder="Ðash Amount (0.001)"
+        />
+      </fieldset>
+      <fieldset disabled>
+        <button type="submit">Deposit Funds to CrowdNode</button>
+      </fieldset>
+    </form>
+  </section>
+  <section class="page" id="wallet">
+    <form name="addPrivKeyForm">
+      <fieldset class="inline">
+        <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
+        <button type="submit">Add Private Key</button>
+      </fieldset>
+    </form>
+    <form name="generatePrivKeyForm">
+      <fieldset>
+        <button type="submit">Generate New Private Key</button>
+      </fieldset>
+    </form>
 
-  <form name="depositCrowdNodeForm">
-    <fieldset disabled>
-      <input
-        type="number"
-        name="amount"
-        step="0.00000001"
-        placeholder="Ðash Amount (0.001)"
-      />
-    </fieldset>
-    <fieldset disabled>
-      <button type="submit">Deposit Funds to CrowdNode</button>
-    </fieldset>
-  </form>
+    <form name="encryptWallet">
+      <fieldset>
+        <input type="password" name="passphrase" placeholder="Enter your encryption passphrase" minlength="1" spellcheck="false" />
+        <button type="submit">Encrypt/Decrypt Wallet</button>
+        <p>Enter a password which will encrypt/decrypt your Private Keys stored in this wallet.</p>
+        <div class="error"></div>
+      </fieldset>
+    </form>
+
+    <table id="addressList">
+      <thead>
+        <tr>
+          <th colspan="3">
+            <header>
+              <div>My Keys</div>
+              <div>🏷️</div>
+            </header>
+          </th>
+        </tr>
+        <tr>
+          <th>Private Key</th>
+          <th>Balance</th>
+          <th>Staked</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr> -->
+      </tbody>
+    </table>
+
+    <!-- <form name="depositCrowdNodeForm">
+      <fieldset disabled>
+        <input
+          type="number"
+          name="amount"
+          step="0.00000001"
+          placeholder="Ðash Amount (0.001)"
+        />
+      </fieldset>
+      <fieldset disabled>
+        <button type="submit">Deposit Funds to CrowdNode</button>
+      </fieldset>
+    </form> -->
+  </section>
+  <section class="page" id="staking">
+    <!-- <form name="depositCrowdNodeForm">
+      <fieldset disabled>
+        <input
+          type="number"
+          name="amount"
+          step="0.00000001"
+          placeholder="Ðash Amount (0.001)"
+        />
+      </fieldset>
+      <fieldset disabled>
+        <button type="submit">Deposit Funds to CrowdNode</button>
+      </fieldset>
+    </form> -->
+  </section>
+  <section class="page" id="settings">
+  </section>
 </main>
 
 
@@ -114,11 +199,14 @@
   })('nav a.theme')
 </script>
 <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
-<script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
+<!-- <script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
 <script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>
-<script src="https://unpkg.com/@dashincubator/ripemd160/ripemd160.js"></script>
-<script src="https://unpkg.com/@root/request@1.x/urequest.js"></script>
-<script src="https://unpkg.com/qrcode-svg@1.x/dist/qrcode.min.js"></script>
-<script src="./main.js" type="module" async></script>
+<script src="https://unpkg.com/@dashincubator/ripemd160/ripemd160.js"></script> -->
+<!-- <script src="https://unpkg.com/@root/request@1.x/urequest.js"></script> -->
+<script src="./node_modules/@root/request/urequest.js"></script>
+<!-- <script src="https://unpkg.com/qrcode-svg@1.x/dist/qrcode.min.js"></script> -->
+<script src="./node_modules/qrcode-svg/dist/qrcode.min.js"></script>
+<!-- <script src="./node_modules/dashkeys/dashkeys.js"></script> -->
+<script src="./main.js" type="module" async defer></script>
 </body>
 </html>
