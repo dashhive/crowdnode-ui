@@ -1,18 +1,35 @@
 import { getEncryptedStorage, } from './CryptStore.js';
-import { qrSvg, } from './qr.js';
+// import { qrSvg, } from './qr.js';
 import { toDuff, toDash, fixedDASH, wifToPrivateKey } from './utils.js'
 import {
+  getAddrRows,
+  getPublicKeysFromWIFS,
+  fundOrInit,
+  hasOrRequestFunds,
+  displayBalances,
+} from './lib/ui.js'
+import {
+  storeKeys,
+  getStoredKeys,
+  swapStorage,
+} from './lib/storage.js'
+import {
+  // Secp256k1,
+  // Base58Check,
+  // RIPEMD160,
+  // DashApi,
   DashHd,
   DashPhrase,
-  DashKeys,
-  DashSight,
-  DashSocket,
-  DashApi,
-  Secp256k1,
-  Base58Check,
-  RIPEMD160,
+  // DashKeys,
+  // DashSight,
+  // DashSocket,
   CrowdNode,
 } from './imports.js'
+// import './components/format-to-dash.js'
+import defineFormatToDash, { init as ftdInit } from './components/format-to-dash.js'
+import defineQrDialog, { init as qrInit } from './components/dialogs/qr.js'
+import defineDepositForm, { init as depositFormInit } from './components/forms/deposit.js'
+import defineWithdrawForm, { init as withdrawFormInit } from './components/forms/withdraw.js'
 
 /** @type {document} */
 const $d = document;
@@ -21,9 +38,9 @@ const $d = document;
 let fundingModal
 
 // @ts-ignore
-let dashsight = DashSight.create({
-  baseUrl: 'https://dashsight.dashincubator.dev',
-});
+// let dashsight = DashSight.create({
+//   baseUrl: 'https://dashsight.dashincubator.dev',
+// });
 
 // let Ws = DashSocket;
 
@@ -100,545 +117,13 @@ async function generateRecoveryPhrase() {
   }
 }
 
-async function getStoredKeys(pass) {
-  let keys = []
-  let $s = store
-
-  if (pass) {
-    $s = encryptedStore
-  }
-
-  for(let key in $s) {
-    if (key.startsWith(KEY_PREFIX)) {
-      // console.log('sess store', itm)
-      keys.push([key.split(KEY_PREFIX)[1], await $s.getItem(key)])
-    }
-  }
-
-  return keys
-}
-
-async function storeKeys(keys) {
-  let $s = store
-
-  if (passphrase) {
-    $s = encryptedStore
-  }
-
-  $s.setItem(`${KEY_PREFIX}${keys.address}`, keys.wif)
-  $s.setItem(SK, keys.address)
-}
-
-/**
- * `getPublicKeysFromWIFS` returns an object with
- * WIF Private key as the Object keys and
- * Dash Public Addresses as values
- *
- * @param {string[]} wifs
- * @returns {Promise<Object>}
- */
-async function getPublicKeysFromWIFS(wifs) {
-  let newPrivateKey
-
-  console.warn(
-    '======getPublicKeysFromWIFS======',
-    {
-      wifs,
-      // passphrase,
-      pkiv: store.getItem(PKIV),
-      ppkiv: !passphrase && !!store.getItem(PKIV),
-    }
-  )
-
-  if (!passphrase && !!JSON.parse(store.getItem(PKIV))) {
-    return null
-  }
-
-  if (!wifs || wifs?.length === 0) {
-    newPrivateKey = await DashKeys.utils.generateWifNonHd()
-    wifs = [newPrivateKey]
-    selectedPrivateKey = newPrivateKey
-  }
-
-  // let addrs = Object.fromEntries(
-  //   Array.from(wifs, w => [w, undefined])
-  // )
-  let addrs = {}
-
-  // for(let wif of wifs) {
-  for(let i=0; i < wifs.length; i++) {
-    let wif = wifs[i]
-    let wifPK
-
-    if (!wif || wif === '') {
-      newPrivateKey = await DashKeys.utils.generateWifNonHd()
-      wif = newPrivateKey
-      wifs[i] = newPrivateKey
-    }
-
-    try {
-      wifPK = await wifToPrivateKey(wif)
-      console.log('wifPK', wif, wifPK)
-    } catch (err) {
-      console.error('wifToPrivateKey Invalid private key WIF', wif)
-    }
-
-    if (wifPK) {
-      try {
-        selectedPrivateKey = selectedPrivateKey || wif
-        addrs[wif] = await DashKeys.wifToAddr(wif);
-      } catch (err) {
-        console.error('Invalid private key WIF', wif)
-      }
-    }
-  }
-
-  if (passphrase) {
-    encryptedStore.setItem(PK, JSON.stringify(wifs))
-    encryptedStore.setItem(SK, selectedPrivateKey)
-  } else {
-    store.setItem(PK, JSON.stringify(wifs))
-    store.setItem(SK, selectedPrivateKey)
-  }
-
-  console.log('wifs & pub addrs', addrs)
-
-  return { newPrivateKey, addrs }
-}
-
-async function getBalance(address) {
-  return await CrowdNode.http.GetBalance(
-    address
-  );
-}
-
-function swapStorage(to, from, key) {
-  to.setItem(key, from.getItem(key))
-  from.removeItem(key)
-}
-
-async function checkWalletFunds(addr) {
-  let walletFunds = await dashsight.getInstantBalance(addr)
-
-  console.info('check wallet funds', walletFunds)
-
-  return walletFunds
-}
-
-async function displayWalletBalance(addr, funds) {
-  let walletFunds = funds || await checkWalletFunds(addr)
-
-  if (walletFunds) {
-    // let msg = `<p>Current Wallet balance for "${
-    //   addr
-    // }" is Đ${
-    //   walletFunds.balance
-    // }</p>`
-    // let msg = `<p>Đash Wallet balance: Đ ${
-    //   walletFunds.balance
-    // }</p>`
-    let msg = `<span title="${walletFunds.balance}">${ fixedDASH(walletFunds.balance, 4) }</span>`
-
-    $d.querySelector('header .dash-status .balance')
-      // .innerHTML = msg
-      .insertAdjacentHTML('beforeend', msg)
-  }
-
-  return walletFunds
-}
-
-async function displayCrowdNodeBalance(addr, funds) {
-  let balance = funds || await getBalance(addr)
-
-  if (balance?.TotalBalance) {
-    // let msg = `<p>Current CrowdNode balance for "${
-    //   addr
-    // }" is Đ${
-    //   balance.TotalBalance
-    // } with ${
-    //   balance.TotalDividend
-    // } in dividends.</p>`
-    // let msg = `
-    //   <p>
-    //     CrowdNode balance: Đ ${
-    //       balance.TotalBalance
-    //     }
-    //   </p>
-    //   <p>
-    //     CrowdNode dividends: Đ ${
-    //       balance.TotalDividend
-    //     }
-    //   </p>
-    // `
-
-    console.info(
-      // msg,
-      balance
-    );
-
-    // $d.querySelector('p.balance')
-    //   .insertAdjacentHTML('beforeend', msg)
-    $d.querySelector('header .cn-status .balance')
-      // .innerHTML = `Đ ${ balance.TotalBalance }`
-      .insertAdjacentHTML(
-        'beforeend',
-        `<span title="${balance.TotalBalance}">${ fixedDASH(balance.TotalBalance, 4) }</span>`
-      )
-    $d.querySelector('header .cn-status .dividends')
-      // .innerHTML = `Đ ${ balance.TotalDividend }`
-      .insertAdjacentHTML(
-        'beforeend',
-        `<span title="${balance.TotalDividend}">${ fixedDASH(balance.TotalDividend, 4) }</span>`
-      )
-  }
-
-  return balance
-}
-
-function balanceEl(balance, dec = 4) {
-  return `<span title="${balance}">${ fixedDASH(balance, dec) }</span>`
-}
-
-async function displayAddressBalance(addr, funds) {
-  let walletFunds = funds || await checkWalletFunds(addr)
-
-  if (walletFunds) {
-    return balanceEl(walletFunds.balance)
-  }
-
-  return balanceEl(0)
-}
-
-async function displayCNAddrBalance(addr, funds) {
-  let balance = funds || await getBalance(addr)
-
-  if (balance?.TotalBalance) {
-    return `
-      ${balanceEl(balance.TotalBalance)}
-      ${balanceEl(balance.TotalDividend)}
-    `
-  }
-
-  return balanceEl(0)
-}
-
-async function displayBalances(addr, funds, cnBalance) {
-  // $d.querySelector('p.balance').innerHTML = ''
-  let bd = $d.querySelectorAll('header .balance, header .dividends')
-    // .forEach(el => el.querySelector('> div').innerHTML = 'Đ 0')
-    .forEach(el => el.querySelector('span')?.remove())
-
-  console.log('displayBalances & dividends', bd)
-
-  const wallet = await displayWalletBalance(addr, funds)
-  const balance = await displayCrowdNodeBalance(addr, cnBalance)
-
-  return {
-    wallet,
-    balance
-  }
-}
-
-/**
- * `requestFundsQR` returns a string to be used in HTML that displays
- * a QR Code in SVG format with text description including optional
- * `msg` appended
- *
- * @param {string} addr
- * @param {import('dashsight').InstantBalance} currentFunds
- * @param {number} fundsNeeded - in satoshis
- * @param {string} [msg]
- * @returns {HTMLDialogElement}
- */
-function requestFundsQR(addr, currentFunds, fundsNeeded, msg = '') {
-  let dashSvg = qrSvg(
-    `dash://${addr}`,
-    {
-      background: '#fff0',
-      color: '#000',
-      indent: 1,
-      padding: 1,
-      size: 'mini',
-      container: 'svg-viewbox',
-      join: true,
-    }
-  )
-
-  let fundingDiff = `<p>
-    You must deposit at least <strong>Đ ${toDash(fundsNeeded)}</strong> ${msg}
-  </p>`
-
-  if (currentFunds.balanceSat > 0) {
-    fundingDiff = `
-      <p>You have <strong>Đ ${toDash(currentFunds.balanceSat)}</strong> in your wallet.<br>This step requires <strong>Đ ${toDash(fundsNeeded)}</strong>.</p>
-      <p>You must deposit at least <strong>Đ ${toDash(fundsNeeded - currentFunds.balanceSat)}</strong> more Dash ${msg}</p>
-    `
-  }
-
-  fundingModal = $d.createElement('dialog')
-
-  fundingModal.insertAdjacentHTML('afterbegin', `
-    <figure>
-      <progress class="pending"></progress>
-      <form name="qrCopyAddr">
-        <h4>Current Wallet Balance</h4>
-        <h3>Đ ${currentFunds.balance}</h3>
-        ${dashSvg}
-        <figcaption>
-          <fieldset class="inline">
-            <input name="qrAddr" value="${addr}" spellcheck="false" />
-            <button>📋</button>
-          </fieldset>
-          ${fundingDiff}
-        </figcaption>
-      </form>
-      <form method="dialog">
-        <button value="cancel">Close</button>
-      </form>
-    </figure>
-  `)
-
-  fundingModal.id = 'fundingModal'
-
-  fundingModal.addEventListener('close', event => {
-    // @ts-ignore
-    event?.target?.remove()
-  })
-
-  return fundingModal
-}
-
-/**
- * `hasOrRequestFunds` checks if the current wallet has the
- * funds required, if not it displays the QR Code SVG request
- * and awaits funding, if it does have enough funds it
- * returns the values
- *
- * @param {string} addr
- * @param {number} requiredFunds
- * @param {string} [msg]
- * @param {function} [callback]
- * @returns {Promise<Object, number>}
- */
-async function hasOrRequestFunds(addr, requiredFunds, msg, callback = () => {}) {
-  let walletFunding
-  let walletFunds = await checkWalletFunds(addr)
-  let fees = walletFunds.balanceSat < feeEstimate ?
-    feeEstimate - walletFunds.balanceSat : 0
-  let fundsAndFees = requiredFunds + fees
-  let fundsNeeded = walletFunds.balanceSat < fundsAndFees
-
-  console.log(
-    'hasOrRequestFunds',
-    walletFunds.balanceSat,
-    fundsAndFees,
-    fundsNeeded
-  )
-
-  if (fundsNeeded) {
-    fundingModal = requestFundsQR(
-      addr,
-      walletFunds,
-      fundsAndFees,
-      msg
-    )
-
-    $d.querySelector("main")
-      .insertAdjacentElement('afterend', fundingModal)
-
-    $d.querySelector('form[name=qrCopyAddr] button')
-      .addEventListener('click', copyToClipboard)
-
-    // fundingModal?.show();
-    fundingModal?.showModal();
-
-    // @ts-ignore
-    walletFunding = await DashSocket.waitForVout(
-      CrowdNode._dashsocketBaseUrl,
-      addr,
-      0,
-    )
-
-    if (walletFunding.satoshis < fundsAndFees) {
-      await hasOrRequestFunds(addr, fundsAndFees, msg)
-    }
-  }
-
-  return {
-    walletFunds,
-    fundsNeeded
-  }
-}
-
-function copyToClipboard(event) {
-  event.preventDefault()
-  // let copyText = document.querySelector(sel);
-  event.target.previousElementSibling.select();
-  document.execCommand("copy");
-}
-
-async function fundOrInit(addr) {
-  let walletFunds = await checkWalletFunds(addr)
-
-  if (walletFunds.balance === 0) {
-    fundingModal = requestFundsQR(
-      addr,
-      walletFunds,
-      // 0.00236608,
-      signupFees,
-      'to signup and accept CrowdNode terms'
-    )
-
-    $d.querySelector("main")
-      .insertAdjacentElement('afterend', fundingModal)
-
-    $d.querySelector('form[name=qrCopyAddr] button')
-      .addEventListener('click', copyToClipboard)
-
-    // fundingModal = /** @type {HTMLDialogElement} */ (
-    //   $d.getElementById("fundingModal")
-    // )
-
-    // fundingModal?.show();
-    fundingModal?.showModal();
-
-    // $d.querySelector("#fundingModal").insertAdjacentHTML(
-    //   'afterbegin',
-    //   `<progress class="pending"></progress>`,
-    //   // `<div class="loader"></div>`,
-    // )
-
-    // @ts-ignore
-    let walletFunding = await DashSocket.waitForVout(
-      CrowdNode._dashsocketBaseUrl,
-      addr,
-      0,
-    )
-
-    if (walletFunding.satoshis > 0) {
-
-      // fundingModal = /** @type {HTMLDialogElement} */ (
-      //   $d.getElementById("fundingModal")
-      // )
-      fundingModal?.close()
-      // fundingModal?.remove()
-      walletFunds.balance = parseFloat(toDash(walletFunding.satoshis))
-      walletFunds.balanceSat = walletFunding.satoshis
-    }
-  }
-
-  if (walletFunds.balance > 0) {
-      $d.getElementById("funding").innerHTML = ''
-
-      let cnStatus = await CrowdNode.status(addr, hotwallet);
-
-      await displayBalances(addr, walletFunds)
-
-      $d.depositCrowdNodeForm.amount.min = toDash(depositMinimum + feeEstimate)
-      // $d.depositCrowdNodeForm.amount.max = walletFunds.balance.toString()
-
-      // $d.depositCrowdNodeForm.amount.max = toDash(toDuff(walletFunds.balance) - CrowdNode.offset)
-
-      if (!cnStatus || cnStatus?.signup === 0) {
-        // myKeys.forEach(myPrivateKey => {
-
-        // })
-        await hasOrRequestFunds(
-          myKeys?.addrs[selectedPrivateKey],
-          signupOnly + feeEstimate,
-          'to signup for CrowdNode'
-        )
-
-        $d.signupCrowdNodeForm.querySelector('fieldset').disabled = false
-      } else if (cnStatus.signup > 0 && cnStatus.accept === 0) {
-        await hasOrRequestFunds(
-          myKeys?.addrs[selectedPrivateKey],
-          acceptOnly + feeEstimate,
-          'to accept terms of service for CrowdNode'
-        )
-
-        $d.acceptCrowdNodeForm.querySelector('fieldset').disabled = false
-      } else {
-        $d.depositCrowdNodeForm.querySelectorAll('fieldset')
-          .forEach(el => el.disabled = false)
-
-        $d.balanceForm.querySelector('fieldset').disabled = false
-      }
-  }
-}
-
-async function loadKeys(
-  privateKeys,
-) {
-  myKeys = await getPublicKeysFromWIFS([...new Set([
-    ..._privateKeys,
-    ...privateKeys
-  ])])
-  selectedPrivateKey = myKeys?.newPrivateKey || selectedPrivateKey
-
-  if (myKeys === null) {
-    console.warn('your private keys are encrypted', myKeys)
-    $d.encPrivKey.querySelector('fieldset').disabled = false
-    $d.privKeyForm.querySelector('fieldset').disabled = true
-    return null
-  }
-
-  $d.privKeyForm.privateKey.value =
-    privateKeys[selectedPrivateKey] ||
-    privateKeys[Object.keys(privateKeys)[0]] ||
-    selectedPrivateKey
-
-  $d.privKeyForm.querySelector('fieldset').disabled = false
-
-  $d.privKeyForm.querySelector('button').disabled = true
-  $d.encPrivKey.querySelector('.error').textContent = ''
-  $d.encPrivKey.querySelector('fieldset').disabled = true
-
-  if (!passphrase) {
-    $d.encPrivKey.querySelector('fieldset').disabled = false
-  }
-
-  console.warn('myKeys?.addrs[selectedPrivateKey]', myKeys, selectedPrivateKey, myKeys?.addrs[selectedPrivateKey])
-  await fundOrInit(myKeys?.addrs[selectedPrivateKey])
-  // }
-  // else if (privateKeyExists) {
-  //   let errMsg = 'Unable to retrieve private key. Check if your password is correct.'
-  //   console.warn(errMsg)
-  //   $d.encPrivKey.querySelector('.error').textContent = `
-  //     ${errMsg}
-  //   `
-  // }
-}
-
-export async function getAddrRows(keys) {
-  let rows = []
-
-  for (let [pub, priv] of keys) {
-    displayAddressBalance(pub)
-      .then(b => {
-        $d.getElementById(`da_${pub}`).innerHTML = b
-      })
-    displayCNAddrBalance(pub)
-      .then(b => {
-        $d.getElementById(`cn_${pub}`).innerHTML = b
-      })
-
-    rows.push(`
-      <tr>
-        <td>
-          <strong>${pub}</strong><br/>
-          <em>${priv}</em>
-        </td>
-        <td id="da_${pub}"></td>
-        <td id="cn_${pub}"></td>
-      </tr>
-    `)
-  }
-
-  return rows.join('\n')
-}
-
 export default async function main() {
+  // ftdInit()
+  defineFormatToDash()
+  defineQrDialog()
+  defineDepositForm()
+  defineWithdrawForm()
+
   currentPage = location.pathname.slice(1) || 'onboarding'
   console.log('main location', currentPage, location.hash, location.search)
 
@@ -1058,6 +543,28 @@ export default async function main() {
       }
     }
   })
+
+  // Dynamically load components based on
+  // `comp-init` attribute and visibility
+  //
+  // $d.querySelectorAll('[comp-init]').forEach(
+  //   el => {
+  //     // var style = window.getComputedStyle(el);
+  //     let isHidden = el.offsetParent === null
+  //     console.log(
+  //       'comp-init',
+  //       el?.getAttribute('comp-init'),
+  //       isHidden,
+  //       // style.display === 'none',
+  //       el
+  //     )
+  //     if (!isHidden) {
+  //       import(el?.getAttribute('comp-init')).then(({ init }) => {
+  //         init()
+  //       })
+  //     }
+  //   }
+  // )
 }
 
 main()
