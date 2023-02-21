@@ -2,39 +2,64 @@
 // Based on https://github.com/plamikcho/local-storage-encrypt
 
 // Encoder based on https://github.com/plamikcho/local-storage-encrypt/blob/master/src/encoder.js
-export function bufferToString(buffer) {
-  const bufView = new Uint16Array(buffer);
-  const length = bufView.length;
-  let result = '';
-  let addition = Math.pow(2, 16) - 1;
 
-  for(let i = 0; i < length;i += addition) {
-    if (i + addition > length) {
-        addition = length - i;
-    }
-    result += String.fromCharCode.apply(null, bufView.subarray(i, i + addition));
-  }
-  return result;
+export function bufferToString(ab) {
+  let bytes = new Uint8Array(ab);
+  let str = new TextDecoder().decode(bytes);
+
+  return str
 }
 
 export function stringToBuffer(str) {
-  const ab = new Uint16Array(str.length);
-  for (let i = 0; i < str.length; i++) {
-      ab[i] = str.charCodeAt(i);
+  let bytes = new TextEncoder().encode(str);
+
+  return bytes.buffer;
+}
+
+/* @type {Uint8ArrayToHex} */
+export function toHex(bytes) {
+  /** @type {Array<String>} */
+  let hex = [];
+
+  bytes.forEach(function (b) {
+    let h = b.toString(16);
+    h = h.padStart(2, "0");
+    hex.push(h);
+  });
+
+  return hex.join("");
+};
+
+/* @type {HexToUint8Array} */
+export function toBytes(hex) {
+  let len = hex.length / 2;
+  let bytes = new Uint8Array(len);
+
+  let index = 0;
+  for (let i = 0; i < hex.length; i += 2) {
+    let c = hex.slice(i, i + 2);
+    let b = parseInt(c, 16);
+    bytes[index] = b;
+    index += 1;
   }
-  return ab.buffer;
+
+  return bytes;
+};
+
+export function bufferToHex(buf) {
+  let bytes = new Uint8Array(buf)
+  let hex = toHex(bytes)
+  return hex
 }
 
-export function buffer8ToString(buf) {
-  return String.fromCharCode.call(null, ...new Uint8Array(buf))
-}
-
-export function stringToBuffer8(str) {
-  return Uint8Array.from([...str].map(ch => ch.charCodeAt())).buffer
+export function hexToBuffer(hex) {
+  let bytes = toBytes(hex)
+  return bytes.buffer
 }
 
 /**
  * Creates an instance of PbCrypto with encrypt and decrypt operations
+ *
  * @param {String} password
  * @param {String} salt
  * @param {Crypto} currentCrypto - window.crypto instance
@@ -71,27 +96,41 @@ export function encryptMsg(
     );
   };
 
-  const encryptMessage = (key, iv, encodedText) => currentCrypto.subtle.encrypt(
-    { name, iv },
-    key,
-    encodedText
-  );
+  async function encrypt(message, iv) {
+    if ('string' === typeof iv) {
+      iv = hexToBuffer(iv)
+    }
 
-  const decryptMessage = (key, iv, ciphertext) => currentCrypto.subtle.decrypt(
-    { name, iv },
-    key,
-    ciphertext
-  );
+    return await deriveKey(password, salt)
+      .then(async cryptoKey => await currentCrypto.subtle.encrypt(
+        { name, iv },
+        cryptoKey,
+        stringToBuffer(message)
+      ))
+      .then(enc => bufferToHex(enc));
+  }
 
-  const encrypt = (message, iv) => deriveKey(password, salt)
-    .then(cryptoKey => encryptMessage(cryptoKey, iv, stringToBuffer(message)))
-    .then(enc => bufferToString(enc));
+  async function decrypt(ciphertext, iv) {
+    if ('string' === typeof iv) {
+      iv = hexToBuffer(iv)
+    }
 
-  const decrypt = (ciphertext, iv) => deriveKey(password, salt)
-    .then(cryptoKey => decryptMessage(cryptoKey, iv, stringToBuffer(ciphertext)))
-    .then(dec => bufferToString(dec));
+    return await deriveKey(password, salt)
+      .then(async function (cryptoKey) {
+        let dec = await currentCrypto.subtle.decrypt(
+          { name, iv },
+          cryptoKey,
+          hexToBuffer(ciphertext)
+        )
 
-  const getInitVector = () => currentCrypto.getRandomValues(new Uint8Array(16));
+        return dec
+      })
+      .then(dec => bufferToString(dec));
+  }
+
+  function getInitVector () {
+    return currentCrypto.getRandomValues(new Uint8Array(16));
+  }
 
   return { encrypt, decrypt, getInitVector }
 }
@@ -114,15 +153,17 @@ export const isBrowserSupported = async () => {
  * Gets encrypted storage with async getItem and setItem
  *
  * @param {Storage} storage Browser storage - localStorage, sessionStorage
- * @param {Encrypto} cryptoWrapper Crypto
+ * @param {Encryptage} cryptoWrapper Crypto
  */
-export function getEncryptedStorageFromCrypto(
-  storage, cryptoWrapper
+export async function getEncryptedStorageFromCrypto(
+  storage,
+  cryptoWrapper,
+  ivKey = null // 'encryptage'
 ) {
-
   let isSupported;
 
-  const getInitVectorKey = key => `${key}_iv`;
+  // const getInitVectorKey = key => `${key}_iv`;
+  const getInitVectorKey = (key) => `${ivKey || key}_iv`;
 
   const unmodifiedFunctions = {
     clear() {
@@ -142,15 +183,48 @@ export function getEncryptedStorageFromCrypto(
     }
   };
 
+  await setBrowserSupport();
+
+  if (isSupported && ivKey) {
+    // const iv = cryptoWrapper.getInitVector();
+    let iv = storage.getItem(getInitVectorKey()) ||
+      cryptoWrapper.getInitVector();
+
+    if ('string' !== typeof iv) {
+      iv = bufferToHex(iv)
+    }
+
+    console.log(
+      'isSupported && ivKey',
+      iv,
+      // stringToBuffer(iv),
+      // hexToBuffer(iv),
+    )
+
+    storage.setItem(
+      getInitVectorKey(),
+      iv,
+    );
+  }
+
   return {
+    ...storage,
     async setItem(key, value) {
       await setBrowserSupport();
       if (isSupported) {
         try {
-          const iv = cryptoWrapper.getInitVector(); // getting iv per item
+          const iv = storage.getItem(getInitVectorKey(key)) ||
+            cryptoWrapper.getInitVector();
           const encrypted = await cryptoWrapper.encrypt(value, iv);
+
           storage.setItem(key, String(encrypted));
-          storage.setItem(getInitVectorKey(key), buffer8ToString(iv));
+
+          if (!ivKey) {
+            storage.setItem(
+              getInitVectorKey(key),
+              bufferToHex(iv),
+            );
+          }
         }
         catch (error) {
           console.error(`Cannot set encrypted value for ${key}. Error: ${error}`);
@@ -166,7 +240,7 @@ export function getEncryptedStorageFromCrypto(
         try {
           const data = storage.getItem(key);
           const iv = storage.getItem(getInitVectorKey(key));
-          const decrypted = await cryptoWrapper.decrypt(data, stringToBuffer8(iv));
+          const decrypted = await cryptoWrapper.decrypt(data, iv);
           return decrypted;
         }
         catch (error) {
@@ -179,11 +253,6 @@ export function getEncryptedStorageFromCrypto(
     async hasItem(key) {
       const data = storage.getItem(key);
       const iv = storage.getItem(getInitVectorKey(key));
-      console.log(
-        'crypt store has item', key,
-        data, iv,
-        data !== null && iv !== null
-      )
       return data !== null && iv !== null
     },
     removeItem(key) {
@@ -196,41 +265,22 @@ export function getEncryptedStorageFromCrypto(
   };
 };
 
-export function getEncryptedStorageFromPassword(
-  storage, password, salt
+export async function getEncryptedStorageFromPassword(
+  storage, password, salt, ivKey
 ) {
-  return getEncryptedStorageFromCrypto(
+  return await getEncryptedStorageFromCrypto(
     storage,
-    encryptMsg(password, salt)
+    encryptMsg(password, salt),
+    ivKey,
   );
 }
 
-export function getEncryptedStorage(storage, ...args) {
-  const [arg1, arg2] = args;
-  console.log('getEncryptedStorage', typeof arg1, typeof arg2)
+export async function getEncryptedStorage(storage, ...args) {
+  const [arg1, arg2, arg3] = args;
   if (typeof arg1 === 'object') { // it is crypto object
-    return getEncryptedStorageFromCrypto(storage, arg1);
+    return await getEncryptedStorageFromCrypto(storage, arg1, arg2);
   }
   if (typeof arg1 === 'string' && typeof arg2 === 'string') {
-    return getEncryptedStorageFromPassword(storage, arg1, arg2);
+    return await getEncryptedStorageFromPassword(storage, arg1, arg2, arg3);
   }
 };
-
-// (function (_exports) {
-//   "use strict";
-
-//   /** @type {any} exports */
-//   let exports = _exports;
-
-//   let CryptStore = {};
-//   exports.CryptStore = CryptStore;
-
-//   CryptStore.encoder = {}
-//   CryptStore.encoder.bufferToString = function BufferToString(){
-
-//   }
-
-//   if ("undefined" !== typeof module) {
-//     module.exports = CryptStore;
-//   }
-// })(("undefined" !== typeof module && module.exports) || window);
