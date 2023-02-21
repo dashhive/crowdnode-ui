@@ -1,3 +1,5 @@
+import { Base58Check, } from './imports.js'
+
 export const DUFFS = 100000000;
 
 // From https://github.com/dashhive/dashkeys.js#helpful-helper-functions
