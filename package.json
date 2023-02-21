@@ -29,6 +29,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@dashevo/dashcore-lib": "^0.19.44",
     "@dashincubator/base58check": "^1.3.2",
     "@dashincubator/ripemd160": "^3.0.0",
     "@dashincubator/secp256k1": "^1.7.1-5",
