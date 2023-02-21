@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CrowdNode.js UI</title>
   <script>
-  if (JSON.parse(localStorage.getItem('invert'))) {
+  if (JSON.parse(localStorage.getItem('theme'))) {
     document.documentElement.classList.add('it')
   }
   </script>
@@ -47,7 +47,7 @@
   </header>
 
   <section class="page" id="onboarding">
-    <form name="privKeyForm">
+    <form name="privKeyForm" comp-init="./components/forms/private-key.js">
       <fieldset>
         <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
         <button type="submit">Use or Generate Private Key</button>
@@ -103,7 +103,7 @@
     </form>
   </section>
   <section class="page" id="wallet">
-    <form name="addPrivKeyForm">
+    <form name="addPrivKeyForm" comp-init="./components/forms/add-private-key.js">
       <fieldset class="inline">
         <input name="privateKey" placeholder="Ðash Private Key (WIF)" spellcheck="false" />
         <button type="submit">Add Private Key</button>
@@ -127,7 +127,7 @@
     <table id="addressList">
       <thead>
         <tr>
-          <th colspan="3">
+          <th colspan="5">
             <header>
               <div>My Keys</div>
               <div>🏷️</div>
@@ -136,7 +136,9 @@
         </tr>
         <tr>
           <th>Private Key</th>
+          <th>Deposit</th>
           <th>Balance</th>
+          <th>Withdraw</th>
           <th>Staked</th>
         </tr>
       </thead>
@@ -185,20 +187,21 @@
 
 <script async>
   (function invertTheme(selector) {
-    let theme = JSON.parse(localStorage.getItem('invert'))
+    let theme = JSON.parse(localStorage.getItem('theme'))
 
     if (selector) {
       document.querySelector(selector)
         .addEventListener('click', event => {
           event.preventDefault()
           theme = !theme
-          localStorage.setItem('invert', theme)
+          localStorage.setItem('theme', theme)
           document.documentElement.classList.toggle('it')
         })
     }
   })('nav a.theme')
 </script>
-<script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script>
+<!-- <script src="https://unpkg.com/@dashevo/dashcore-lib@0.19.x"></script> -->
+<script src="./node_modules/@dashevo/dashcore-lib/dist/dashcore-lib.min.js"></script>
 <!-- <script src="https://unpkg.com/@dashincubator/base58check/base58check.js"></script>
 <script src="https://unpkg.com/@dashincubator/secp256k1/secp256k1.js"></script>
 <script src="https://unpkg.com/@dashincubator/ripemd160/ripemd160.js"></script> -->

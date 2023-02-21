@@ -1,7 +1,6 @@
-
 :root,
 ::backdrop {
-  color-scheme: light dark;
+  /* color-scheme: light dark; */
   --c: #111; /* base interactive color */
   --oc: #222; /* off interactive color */
   --di: #333; /* off interactive color */
@@ -9,8 +8,11 @@
   --ct: #111a; /* base interactive color */
   --d: #242424; /* base bg color */
   --l: #eee; /* base color */
-  --bgc: var(--d);
-  --fc: var(--l);
+  --lt: #eeea; /* base color */
+  --lf: #dfdfdf; /* base color */
+  --f: #fff; /* base color */
+  /* --bgc: var(--d);
+  --fc: var(--l); */
 
   --info: #0bf;
   --note: #888;
@@ -40,10 +42,63 @@
 * { box-sizing: border-box; }
 
 @media (prefers-color-scheme: light) {
-  html:not(.it),img,svg,video,html:not(.it) dialog {
-  /* html:not(.it),img,svg,video { */
-    filter: invert(95%) hue-rotate(180deg);
+  :root:not(.it),
+  ::backdrop {
+    color-scheme: light;
+    --bgc: var(--l);
+    --fc: var(--d);
+
+    --linkbg: var(--lf);
+    --linkfg: var(--lite);
+    --linkbgh: var(--f);
+    --linkfgh: var(--lite);
+
+    --btnbg: var(--l);
+    --btnfg: var(--di);
+    --btnbgd: var(--lf);
+    --btnfgd: var(--note);
+    --btnbgh: var(--f);
+    --btnfgh: var(--lite);
+
+    --inpbg: var(--f);
+    --inpbd: var(--note);
+    --inpfg: var(--fc);
+    --inpbdi: var(--dang);
+
+    --mdlbg: var(--f);
+    --mdlfg: var(--di);
+    --mdlbd: var(--lt);
   }
+
+  .it {
+    color-scheme: dark;
+    --bgc: var(--d);
+    --fc: var(--l);
+
+    --linkbg: var(--oc);
+    --linkfg: var(--info);
+    --linkbgh: var(--c);
+    --linkfgh: var(--info);
+
+    --btnbg: var(--oc);
+    --btnfg: var(--fc);
+    --btnbgd: var(--d);
+    --btnfgd: var(--note);
+    --btnbgh: var(--c);
+    --btnfgh: var(--info);
+
+    --inpbg: var(--c);
+    --inpbd: var(--hc);
+    --inpfg: var(--fc);
+    --inpbdi: var(--dang);
+
+    --mdlbg: var(--d);
+    --mdlfg: var(--fc);
+    --mdlbd: var(--ct);
+  }
+  /* html:not(.it),img,svg,video,html:not(.it) dialog {
+    filter: invert(95%) hue-rotate(180deg);
+  } */
   progress:indeterminate {
     background: linear-gradient(
       90deg,
@@ -61,10 +116,63 @@
   }
 }
 @media (prefers-color-scheme: dark) {
-  html.it,img,svg,video,html.it dialog {
-  /* html.it,img,svg,video { */
-    filter: invert(95%) hue-rotate(180deg);
+  :root:not(.it),
+  ::backdrop {
+    color-scheme: dark;
+    --bgc: var(--d);
+    --fc: var(--l);
+
+    --linkbg: var(--oc);
+    --linkfg: var(--info);
+    --linkbgh: var(--c);
+    --linkfgh: var(--info);
+
+    --btnbg: var(--oc);
+    --btnfg: var(--fc);
+    --btnbgd: var(--d);
+    --btnfgd: var(--note);
+    --btnbgh: var(--c);
+    --btnfgh: var(--info);
+
+    --inpbg: var(--c);
+    --inpbd: var(--hc);
+    --inpfg: var(--fc);
+    --inpbdi: var(--dang);
+
+    --mdlbg: var(--d);
+    --mdlfg: var(--fc);
+    --mdlbd: var(--ct);
   }
+
+  .it {
+    color-scheme: light;
+    --bgc: var(--l);
+    --fc: var(--d);
+
+    --linkbg: var(--lf);
+    --linkfg: var(--lite);
+    --linkbgh: var(--f);
+    --linkfgh: var(--lite);
+
+    --btnbg: var(--l);
+    --btnfg: var(--di);
+    --btnbgd: var(--lf);
+    --btnfgd: var(--note);
+    --btnbgh: var(--f);
+    --btnfgh: var(--lite);
+
+    --inpbg: var(--f);
+    --inpbd: var(--note);
+    --inpfg: var(--fc);
+    --inpbdi: var(--dang);
+
+    --mdlbg: var(--f);
+    --mdlfg: var(--di);
+    --mdlbd: var(--lt);
+  }
+  /* html.it,img,svg,video,html.it dialog {
+    filter: invert(95%) hue-rotate(180deg);
+  } */
   progress:indeterminate {
     background: linear-gradient(
       90deg,
@@ -145,12 +253,12 @@ nav a {
 }
 
 nav a:hover {
-  color: var(--fc);
+  color: var(--linkfg);
   text-decoration: none;
 }
 
 nav #home a:hover {
-  background-color: var(--c);
+  background-color: var(--linkbgh);
 }
 
 nav a.theme {
@@ -205,10 +313,10 @@ form fieldset:disabled {
   opacity: .3;
 }
 button {
-  background-color: var(--oc);
-  color: var(--fc);
+  background-color: var(--btnbg);
+  color: var(--btnfg);
   /* border-radius: 8px; */
-  border: 1px solid var(--fc);
+  border: 1px solid var(--btnfg);
   padding: 0.8rem 1.2rem;
   font-size: 1.1em;
   font-weight: 500;
@@ -217,19 +325,19 @@ button {
   transition: border-color 0.25s;
 }
 button:disabled {
-  background-color: var(--d);
-  color: var(--note);
-  border-color: var(--note);
+  background-color: var(--btnbgd);
+  color: var(--btnfgd);
+  border-color: var(--btnfgd);
   cursor: not-allowed;
 }
 button:not(:disabled):hover {
-  background-color: var(--c);
-  color: var(--info);
-  border-color: var(--info);
+  background-color: var(--btnbgh);
+  color: var(--btnfgh);
+  border-color: var(--btnfgh);
 }
 button:not(:disabled):focus,
 button:not(:disabled):focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 1px solid -webkit-focus-ring-color;
 }
 form.link {
   margin: 0;
@@ -261,9 +369,9 @@ header aside form[name="balanceForm"] button {
   border: 0 solid transparent;
 } */
 input, select {
-  background-color: var(--c);
-  color: var(--fc);
-  border: 1px solid var(--hc);
+  background-color: var(--inpbg);
+  color: var(--inpfg);
+  border: 1px solid var(--inpbd);
   text-align: center;
   line-height: 1;
   font-size: 1.5rem;
@@ -273,8 +381,8 @@ input, select {
   /* max-width: 24rem; */
 }
 input:invalid {
-  border-color: var(--dang);
-  outline: var(--dang);
+  border-color: var(--inpbdi);
+  outline: var(--inpbdi);
 }
 label {
   display: flex;
@@ -311,6 +419,15 @@ form fieldset.inline button {
   border: 1px solid var(--hc);
 }
 
+a {
+  color: var(--linkfg);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--linkfgh);
+  text-decoration: dashed;
+  text-decoration-line: underline;
+}
 
 table {
   width: 100%;
@@ -350,20 +467,12 @@ table thead header div:last-child {
 table thead tr:last-child th {
   text-align: left;
   /* text-align: right; */
-  width: 15%;
+  width: 11%;
 }
 table thead tr:last-child th:first-child {
   width: auto;
 }
-a {
-  color: var(--info);
-  text-decoration: none;
-}
-a:hover {
-  color: var(--info);
-  text-decoration: dashed;
-  text-decoration-line: underline;
-}
+
 pre {
   background-color: var(--c);
   font-family: var(--fm);
@@ -569,12 +678,14 @@ progress#pageLoader:indeterminate {
   100% { background-position: 100vw; }
 }
 
+qr-dialog dialog,
 dialog {
-  background: var(--di);
-  color: var(--fc);
+  background: var(--mdlbg);
+  color: var(--mdlfg);
 }
+qr-dialog dialog::backdrop,
 dialog::backdrop {
-  background: var(--ct);
+  background: var(--mdlbd);
 }
 
 dialog#fundingModal {
