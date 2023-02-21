@@ -57,6 +57,7 @@
   }
   html:not(.it) nav a.theme::before {
     content: '☽';
+    transform: rotateZ(45deg);
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -74,6 +75,7 @@
   }
   nav a.theme::before {
     content: '☽';
+    transform: rotateZ(45deg);
   }
   html:not(.it) nav a.theme::before {
     content: '🌣';
@@ -265,7 +267,8 @@ input, select {
   text-align: center;
   line-height: 1;
   font-size: 1.5rem;
-  width: 100%;
+  /* width: 100%; */
+  flex: 1 1 auto;
   height: 3rem;
   /* max-width: 24rem; */
 }
@@ -284,9 +287,11 @@ label {
 }
 label > input[type=checkbox] {
   width: 2rem;
+  flex: 0 0 auto;
 }
 fieldset:not(:disabled) label {
   cursor: pointer;
+  width: fit-content;
 }
 form fieldset.inline {
   border: 0;
@@ -309,15 +314,46 @@ form fieldset.inline button {
 
 table {
   width: 100%;
-  table-layout: fixed;
+  /* table-layout: fixed; */
+  box-shadow: 0 0 0 1px #fff3;
 }
-table > tbody td {
+table > tbody td,
+table > thead th:not([colspan]) {
   padding: 1rem;
   word-break: break-word;
 }
-table th:first-child,
+table > tbody td {
+  padding: 0 1rem 1rem;
+}
+/* table th:first-child,
 table td:first-child {
   width: 120px;
+} */
+table thead {
+  text-align: left;
+}
+table thead header {
+  display: flex;
+  padding: 0;
+  min-height: auto;
+  padding: 1rem;
+}
+table thead header div {
+  flex: 1 1 auto;
+}
+table thead header div:first-child {
+  flex: 2 1 auto;
+}
+table thead header div:last-child {
+  text-align: center;
+}
+table thead tr:last-child th {
+  text-align: left;
+  /* text-align: right; */
+  width: 15%;
+}
+table thead tr:last-child th:first-child {
+  width: auto;
 }
 a {
   color: var(--info);
@@ -586,6 +622,13 @@ dialog figure figcaption input {
 dialog svg {
   max-width: 75%;
   margin: auto;
+}
+
+section.page {
+  display: none;
+}
+section.page.active {
+  display: block;
 }
 
 
