@@ -1,4 +1,4 @@
-import { getEncryptedStorage, } from './CryptStore.js';
+// import { getEncryptedStorage, } from './CryptStore.js';
 // import { qrSvg, } from './qr.js';
 import { toDuff, toDash, fixedDASH, wifToPrivateKey } from './utils.js'
 import {
@@ -30,8 +30,10 @@ import {
 import defineFormatToDash, { init as ftdInit } from './components/format-to-dash.js'
 import defineQrDialog, { init as qrInit } from './components/dialogs/qr.js'
 import defineWithdrawDialog, { init as withdrawDialogInit } from './components/dialogs/withdraw.js'
+import defineSignupDialog, { init as signupDialogInit } from './components/dialogs/signup.js'
 import defineDepositForm, { init as depositFormInit } from './components/forms/deposit.js'
 import defineWithdrawForm, { init as withdrawFormInit } from './components/forms/withdraw.js'
+import defineSignupForm, { init as signupFormInit } from './components/forms/signup.js'
 
 /** @type {document} */
 const $d = document;
@@ -144,8 +146,10 @@ export default async function main() {
   defineFormatToDash()
   defineQrDialog()
   defineWithdrawDialog()
+  defineSignupDialog()
   defineDepositForm()
   defineWithdrawForm()
+  defineSignupForm()
 
   currentPage = location.pathname.slice(1) || 'onboarding'
   console.log('main location', currentPage, location.hash, location.search)
@@ -171,17 +175,19 @@ export default async function main() {
   //   _privateKeys = JSON.parse(await store.getItem(PK)) || []
   // }
 
-  _privateKeys = await getStoredKeys()
+  _privateKeys = await getStoredKeys(passphrase)
 
   if (currentPage === PAGE_WALLET) {
     console.info('ON PAGE:', PAGE_WALLET)
     // let keys = await getStoredKeys()
-    let addrRows = await getAddrRows(_privateKeys)
+    let addrRows = await getAddrRows(_privateKeys, passphrase)
 
     console.info('WALLET ROWS', _privateKeys)
 
     $d.querySelector('#addressList tbody')
       .insertAdjacentHTML('afterbegin', addrRows)
+
+    document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
   }
 
   // loadKeys(_privateKeys)
@@ -249,11 +255,12 @@ export default async function main() {
           }
         }
 
-        let addrRows = await getAddrRows(decryptedStoredKeys)
+        let addrRows = await getAddrRows(decryptedStoredKeys, passphrase)
 
         // console.info('WALLET ROWS', storedKeys, addrRows)
 
         $d.querySelector('#addressList tbody').innerHTML = addrRows
+        document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
 
         // storeKeys()
 
@@ -382,12 +389,13 @@ export default async function main() {
 
       // Store new keys in localStorage
       storeKeys(myKeys, passphrase)
-      let storedKeys = await getStoredKeys()
-      let addrRows = await getAddrRows(storedKeys)
+      let storedKeys = await getStoredKeys(passphrase)
+      let addrRows = await getAddrRows(storedKeys, passphrase)
 
       // console.info('WALLET ROWS', storedKeys, addrRows)
 
       $d.querySelector('#addressList tbody').innerHTML = addrRows
+      document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
 
       console.log('generateRecoveryPhrase', myKeys, storedKeys)
 
@@ -406,12 +414,13 @@ export default async function main() {
       myKeys = await generateRecoveryPhrase()
       // Store new keys in localStorage
       storeKeys(myKeys, passphrase)
-      let storedKeys = await getStoredKeys()
-      let addrRows = await getAddrRows(storedKeys)
+      let storedKeys = await getStoredKeys(passphrase)
+      let addrRows = await getAddrRows(storedKeys, passphrase)
 
       // console.info('WALLET ROWS', storedKeys, addrRows)
 
       $d.querySelector('#addressList tbody').innerHTML = addrRows
+      document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
       // $d.querySelector('#addressList tbody')
       //   .insertAdjacentHTML('afterbegin', addrRows)
 
