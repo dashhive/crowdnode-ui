@@ -470,6 +470,9 @@ table thead tr:last-child th {
   width: 11%;
 }
 table thead tr:last-child th:first-child {
+  width: 1rem;
+}
+table thead tr:last-child th:nth-child(2) {
   width: auto;
 }
 

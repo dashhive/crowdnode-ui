@@ -12,6 +12,7 @@ import {
   storeKeys,
   getStoredKeys,
   swapStorage,
+  initEncryptedStore,
 } from './lib/storage.js'
 import {
   // Secp256k1,
@@ -164,12 +165,7 @@ export default async function main() {
 
   // console.log('store.getItem(PKIV)', store.getItem(PKIV), !!store.getItem(PKIV))
   // if (passphrase) {
-  //   encryptedStore = await getEncryptedStorage(
-  //     store,
-  //     passphrase,
-  //     STOREAGE_SALT,
-  //     ENCRYPT_IV
-  //   );
+  //   encryptedStore = await initEncryptedStore(passphrase)
   //   _privateKeys = JSON.parse(await encryptedStore.getItem(PK)) || []
   // } else if (!store.getItem(PKIV)) {
   //   _privateKeys = JSON.parse(await store.getItem(PK)) || []
@@ -206,12 +202,7 @@ export default async function main() {
 
         $d.encPrivKey.passphrase.value = ''
 
-        encryptedStore = encryptedStore || await getEncryptedStorage(
-          store,
-          passphrase,
-          STOREAGE_SALT,
-          ENCRYPT_IV
-        );
+        encryptedStore = await initEncryptedStore(passphrase)
 
         // const privateKeysExists = await encryptedStore.hasItem(`${ENCRYPT_IV}_iv`)
 
@@ -247,19 +238,14 @@ export default async function main() {
         // @ts-ignore
         event.target.passphrase.value = ''
 
-        encryptedStore = encryptedStore || await getEncryptedStorage(
-          store,
-          passphrase,
-          STOREAGE_SALT,
-          ENCRYPT_IV
-        );
+        encryptedStore = await initEncryptedStore(passphrase)
 
         const decryptedStoredKeys = await getStoredKeys(passphrase)
 
         for (let [address, wif] of storedKeys) {
           if (wif.length < 53) {
             console.log('stored key', address, wif.length)
-            storeKeys({ address, wif })
+            storeKeys({ address, wif }, passphrase)
           }
         }
 
@@ -344,12 +330,7 @@ export default async function main() {
         store = rememberMe ? localStorage : sessionStorage
 
         if (passphrase) {
-          encryptedStore = await getEncryptedStorage(
-            store,
-            passphrase,
-            STOREAGE_SALT,
-            ENCRYPT_IV
-          );
+          encryptedStore = await initEncryptedStore(passphrase)
         }
       } else {
         if (
@@ -400,7 +381,7 @@ export default async function main() {
       myKeys = await generateRecoveryPhrase(privateKey)
 
       // Store new keys in localStorage
-      storeKeys(myKeys)
+      storeKeys(myKeys, passphrase)
       let storedKeys = await getStoredKeys()
       let addrRows = await getAddrRows(storedKeys)
 
@@ -424,7 +405,7 @@ export default async function main() {
       // Generate the new Public & Private Keys
       myKeys = await generateRecoveryPhrase()
       // Store new keys in localStorage
-      storeKeys(myKeys)
+      storeKeys(myKeys, passphrase)
       let storedKeys = await getStoredKeys()
       let addrRows = await getAddrRows(storedKeys)
 
