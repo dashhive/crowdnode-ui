@@ -26,6 +26,10 @@ export class DepositForm extends HTMLElement {
       @import url(/index.css);
       fieldset {
         border: 0;
+        min-width: 1rem;
+      }
+      form fieldset {
+        min-width: 1rem;
       }
     `
 
