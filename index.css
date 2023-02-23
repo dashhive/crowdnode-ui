@@ -257,7 +257,8 @@ nav a:hover {
   text-decoration: none;
 }
 
-nav #home a:hover {
+nav #home a:hover,
+nav #settings a:hover {
   background-color: var(--linkbgh);
 }
 
@@ -474,6 +475,11 @@ table thead tr:last-child th:first-child {
 }
 table thead tr:last-child th:nth-child(2) {
   width: auto;
+}
+table tbody td:nth-child(3),
+table tbody td:nth-child(5),
+table tbody td:nth-child(7) {
+  width: 1rem;
 }
 
 pre {
