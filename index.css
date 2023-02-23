@@ -679,15 +679,18 @@ progress#pageLoader:indeterminate {
 }
 
 qr-dialog dialog,
+withdraw-dialog dialog,
 dialog {
   background: var(--mdlbg);
   color: var(--mdlfg);
 }
 qr-dialog dialog::backdrop,
+withdraw-dialog dialog::backdrop,
 dialog::backdrop {
   background: var(--mdlbd);
 }
 
+dialog#withdrawModal,
 dialog#fundingModal {
   position: fixed;
   display: flex;
@@ -784,6 +787,7 @@ section.page.active {
     flex-direction: row;
   }
 
+  dialog#withdrawModal,
   dialog#fundingModal {
     position: fixed;
     top: 0px;
