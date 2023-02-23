@@ -1,21 +1,16 @@
 import {
-  DashSocket,
-  DashSight,
-  DashApi,
   CrowdNode,
 } from '../../imports.js'
 import { toDuff } from '../../utils.js'
-import { getPrivateKey } from '../../lib/storage.js'
-
-// import {
-//   requestFunds,
-// } from '../../lib/ui.js'
-
-// @ts-ignore
-let dashsight = DashSight.create({
-  baseUrl: 'https://dashsight.dashincubator.dev',
-});
-let dashApi = DashApi.create({ insightApi: dashsight });
+import {
+  requestWithdraw,
+  getAddrRows,
+} from '../../lib/ui.js'
+import {
+  storeKeys,
+  getStoredKeys,
+  swapStorage,
+} from '../../lib/storage.js'
 
 /** @type {document} */
 const $d = document;
@@ -27,10 +22,10 @@ export class WithdrawForm extends HTMLElement {
     super();
 
     let name = this.getAttribute('name')
-    let fromAddr = this.getAttribute('fromaddr')
+    let from = this.getAttribute('from')
     let btnTxt = this.getAttribute('btn') || 'Withdraw Funds' // to CrowdNode
 
-    const form = $d.createElement('form')
+    const form = $d.createElement('form');
     const style = $d.createElement('style')
 
     style.textContent = `
@@ -42,23 +37,7 @@ export class WithdrawForm extends HTMLElement {
 
     // <format-to-dash value="${walletFunds.balance}" />
     form.setAttribute('name', name)
-    // span.textContent = fixedDASH(val, dec);
     form.innerHTML = `
-      <fieldset>
-        <input
-          name="toAddress"
-          placeholder="Send to Address"
-          spellcheck="false"
-        />
-      </fieldset>
-      <fieldset>
-        <input
-          type="number"
-          name="amount"
-          step="0.00000001"
-          placeholder="Ðash Amount (0.001)"
-        />
-      </fieldset>
       <fieldset>
         <button type="submit">${btnTxt}</button>
       </fieldset>
@@ -67,64 +46,48 @@ export class WithdrawForm extends HTMLElement {
     form.addEventListener('submit', async event => {
       event.preventDefault()
 
-      const toAddr = event.target.toAddress?.value
-      let amount = event.target.amount?.value
-      let duffAmount = toDuff(amount)
-
-      let tx
-
       console.log(
-        'withdraw funds amount',
-        amount,
-        duffAmount,
-        toAddr,
+        'withdraw funds',
       )
 
-      if (fromAddr && duffAmount) {
-        let fromWif = await getPrivateKey(fromAddr)
-        // DashApi.create()
-        console.log(
-          'WithdrawForm transfer',
-          { fromAddr, fromWif, toAddr },
-          { amount, duffAmount,}
+      if (from) {
+        let withdrawModal = requestWithdraw(name, from)
+
+        withdrawModal?.showModal();
+        withdrawModal?.on('close', async event => {
+          let storedKeys = await getStoredKeys()
+          let addrRows = await getAddrRows(storedKeys)
+
+          console.info('withdrawModal WALLET ROWS', storedKeys, addrRows)
+
+          $d.querySelector('#addressList tbody').innerHTML = addrRows
+        })
+
+        // @ts-ignore
+        // walletFunding = await DashSocket.waitForVout(
+        //   CrowdNode._dashsocketBaseUrl,
+        //   addr,
+        //   0,
+        // )
+
+        // if (walletFunding.satoshis < fees) {
+        //   await hasOrRequestFunds(addr, fees, msg)
+        // }
+
+        // if (walletFunding.satoshis > 0) {
+        //   withdrawModal?.close()
+        //   walletFunds.balance = parseFloat(toDash(walletFunding.satoshis))
+        //   walletFunds.balanceSat = walletFunding.satoshis
+        // }
+
+        $d.getElementById('pageLoader')?.remove()
+
+        $d.body.insertAdjacentHTML(
+          'afterbegin',
+          `<progress id="pageLoader" class="pending"></progress>`,
         )
-        tx = await dashApi.createPayment(fromWif, toAddr, duffAmount);
 
-        console.log('WithdrawForm tx', tx)
-
-        let insend = await dashsight.instantSend(tx);
-
-        console.log('WithdrawForm instantSend', insend)
-
-        let withdrawTransfer = await DashSocket.waitForVout(
-          CrowdNode._dashsocketBaseUrl,
-          toAddr,
-          0,
-        )
-
-        console.log(
-          'WithdrawForm transfer',
-          withdrawTransfer,
-        )
-      //   let depositAmount = toDuff(amount)
-      //   if (depositAmount < depositMinimum) {
-      //     depositAmount = depositMinimum
-      //   }
-      //   depositAmount = -1
-
-      //   await requestFunds(
-      //     fromAddr,
-      //     ''
-      //   )
-
-      //   $d.getElementById('pageLoader')?.remove()
-
-      //   $d.body.insertAdjacentHTML(
-      //     'afterbegin',
-      //     `<progress id="pageLoader" class="pending"></progress>`,
-      //   )
-
-      //   $d.getElementById('pageLoader').remove()
+        $d.getElementById('pageLoader').remove()
       }
     })
 
