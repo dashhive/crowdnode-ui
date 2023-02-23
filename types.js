@@ -25,7 +25,8 @@
  *  privKeyForm?: HTMLElement & { privateKey?: HTMLInputElement };
  *  balanceForm?: HTMLElement;
  *  fundingModal?: HTMLDialogElement,
- *  generatePrivKeyForm?: HTMLElement
+ *  generatePrivKeyForm?: HTMLElement,
+ *  addPrivKeyForm?: HTMLElement,
  * } & Document} document
  *
  * @typedef {{

@@ -20,7 +20,7 @@ import {
   // DashApi,
   DashHd,
   DashPhrase,
-  // DashKeys,
+  DashKeys,
   // DashSight,
   // DashSocket,
   CrowdNode,
@@ -28,6 +28,7 @@ import {
 // import './components/format-to-dash.js'
 import defineFormatToDash, { init as ftdInit } from './components/format-to-dash.js'
 import defineQrDialog, { init as qrInit } from './components/dialogs/qr.js'
+import defineWithdrawDialog, { init as withdrawDialogInit } from './components/dialogs/withdraw.js'
 import defineDepositForm, { init as depositFormInit } from './components/forms/deposit.js'
 import defineWithdrawForm, { init as withdrawFormInit } from './components/forms/withdraw.js'
 
@@ -88,21 +89,41 @@ function resetFormFields() {
   $d.balanceForm.querySelector('fieldset').disabled = true
 }
 
-async function generateRecoveryPhrase() {
+async function generateRecoveryPhrase(wifPk) {
   let targetBitEntropy = 128;
   let secretSalt = ''; // "TREZOR";
-  let recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
-  let seed = await DashPhrase.toSeed(recoveryPhrase, secretSalt);
-  let wallet = await DashHd.fromSeed(seed);
+  let recoveryPhrase
+  let seed
+  let wallet
   let accountIndex = 0;
-  let account = await wallet.deriveAccount(accountIndex);
+  let account
   let use = DashHd.RECEIVE;
-  let xkey = await account.deriveXKey(use);
-  let xprv = await DashHd.toXPrv(xkey);
-  let xpub = await DashHd.toXPub(xkey);
-  let key = await xkey.deriveAddress(use);
-  let wif = await DashHd.toWif(key.privateKey);
-  let address = await DashHd.toAddr(key.publicKey);
+  let xkey
+  let xprv
+  let xpub
+  let key
+  let privateKey
+  let wif
+  let address
+
+  if (wifPk) {
+    privateKey = await wifToPrivateKey(wifPk)
+    address = await DashKeys.wifToAddr(wifPk);
+    // recoveryPhrase = await DashPhrase.encode(wifToPK);
+    // seed = await DashPhrase.toSeed(wifToPK, secretSalt);
+  } else {
+    recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
+    seed = await DashPhrase.toSeed(recoveryPhrase, secretSalt);
+    wallet = await DashHd.fromSeed(seed);
+    account = await wallet.deriveAccount(accountIndex);
+    xkey = await account.deriveXKey(use);
+    xprv = await DashHd.toXPrv(xkey);
+    xpub = await DashHd.toXPub(xkey);
+    key = await xkey.deriveAddress(use);
+    address = await DashHd.toAddr(key.publicKey);
+  }
+
+  wif = await DashHd.toWif(key?.privateKey || privateKey);
 
   return {
     recoveryPhrase,
@@ -121,6 +142,7 @@ export default async function main() {
   // ftdInit()
   defineFormatToDash()
   defineQrDialog()
+  defineWithdrawDialog()
   defineDepositForm()
   defineWithdrawForm()
 
@@ -367,6 +389,32 @@ export default async function main() {
     })
 
 
+  $d.addPrivKeyForm
+    .addEventListener('submit', async event => {
+      event.preventDefault()
+
+      // @ts-ignore
+      const privateKey = event.target.privateKey?.value?.trim()
+
+      // Generate the new Public & Private Keys
+      myKeys = await generateRecoveryPhrase(privateKey)
+
+      // Store new keys in localStorage
+      storeKeys(myKeys)
+      let storedKeys = await getStoredKeys()
+      let addrRows = await getAddrRows(storedKeys)
+
+      // console.info('WALLET ROWS', storedKeys, addrRows)
+
+      $d.querySelector('#addressList tbody').innerHTML = addrRows
+
+      console.log('generateRecoveryPhrase', myKeys, storedKeys)
+
+      // @ts-ignore
+      event.target.privateKey.value = ''
+    })
+
+
   $d.generatePrivKeyForm
     .addEventListener('submit', async event => {
       event.preventDefault()
@@ -549,15 +597,7 @@ export default async function main() {
   //
   // $d.querySelectorAll('[comp-init]').forEach(
   //   el => {
-  //     // var style = window.getComputedStyle(el);
   //     let isHidden = el.offsetParent === null
-  //     console.log(
-  //       'comp-init',
-  //       el?.getAttribute('comp-init'),
-  //       isHidden,
-  //       // style.display === 'none',
-  //       el
-  //     )
   //     if (!isHidden) {
   //       import(el?.getAttribute('comp-init')).then(({ init }) => {
   //         init()
