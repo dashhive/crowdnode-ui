@@ -34,21 +34,38 @@ export class QrDialog extends HTMLElement {
     this.loadQr = this.loadQr.bind(this);
     this.showModal = this.showModal.bind(this);
     this.close = this.close.bind(this);
+    this.on = this.on.bind(this);
+    this.listeners = {}
 
     this.loadQr()
 
     dialog.id = this.getAttribute('id') || 'fundingModal'
 
-    dialog.addEventListener('close', event => {
+    this.handleClose = event => {
       // @ts-ignore
       event?.target?.remove()
-    })
+      // @ts-ignore
+      shadowRoot.host?.remove()
+
+      if (this.listeners['close']?.length > 0) {
+        for (let callback of this.listeners['close']) {
+          callback(this.dialog)
+        }
+      }
+    }
+
+    dialog.addEventListener('close', this.handleClose)
 
     this.dialog = dialog
 
-    const shadowRoot = this.attachShadow({mode: 'closed'});
+    const shadowRoot = this.attachShadow({mode: 'open'});
     shadowRoot.appendChild(style);
     shadowRoot.appendChild(dialog);
+  }
+
+  on(event, callback) {
+    this.listeners[event] = this.listeners[event] || []
+    this.listeners[event].push(callback)
   }
 
   close(e) {
@@ -56,6 +73,7 @@ export class QrDialog extends HTMLElement {
     //   this.addr, this.funds, this.needed, this.msg
     // )
     this.dialog?.close()
+    // this.shadowRoot?.parentElement.remove()
   }
 
   showModal(e) {
@@ -128,6 +146,8 @@ export class QrDialog extends HTMLElement {
 
   disconnectedCallback(e) {
     console.log('QrDialog removed from page.', e);
+    this.dialog.removeEventListener('close', this.handleClose)
+    // this.form.removeEventListener('submit', this.handleSubmit)
   }
 
   adoptedCallback(e) {
