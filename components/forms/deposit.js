@@ -31,15 +31,6 @@ export class DepositForm extends HTMLElement {
 
     // <format-to-dash value="${walletFunds.balance}" />
     form.setAttribute('name', name)
-    // span.textContent = fixedDASH(val, dec);
-    // <fieldset>
-    //   <input
-    //     type="number"
-    //     name="amount"
-    //     step="0.00000001"
-    //     placeholder="Ðash Amount (0.001)"
-    //   />
-    // </fieldset>
     form.innerHTML = `
       <fieldset>
         <button type="submit">${btnTxt}</button>

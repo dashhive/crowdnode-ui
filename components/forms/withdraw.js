@@ -1,7 +1,6 @@
 import {
   CrowdNode,
 } from '../../imports.js'
-import { toDuff } from '../../utils.js'
 import {
   requestWithdraw,
   getAddrRows,
@@ -62,23 +61,6 @@ export class WithdrawForm extends HTMLElement {
 
           $d.querySelector('#addressList tbody').innerHTML = addrRows
         })
-
-        // @ts-ignore
-        // walletFunding = await DashSocket.waitForVout(
-        //   CrowdNode._dashsocketBaseUrl,
-        //   addr,
-        //   0,
-        // )
-
-        // if (walletFunding.satoshis < fees) {
-        //   await hasOrRequestFunds(addr, fees, msg)
-        // }
-
-        // if (walletFunding.satoshis > 0) {
-        //   withdrawModal?.close()
-        //   walletFunds.balance = parseFloat(toDash(walletFunding.satoshis))
-        //   walletFunds.balanceSat = walletFunding.satoshis
-        // }
 
         $d.getElementById('pageLoader')?.remove()
 
