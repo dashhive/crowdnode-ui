@@ -13,6 +13,15 @@ let dashsight = DashSight.create({
 });
 let dashApi = DashApi.create({ insightApi: dashsight });
 
+const initialState = {
+  id: 'Modal',
+  name: 'withdraw',
+  submitTxt: 'Withdraw Funds',
+  submitAlt: 'Withdraw from Dash Wallet',
+  cancelTxt: 'Cancel',
+  cancelAlt: 'Cancel Dash Withdraw',
+}
+
 export class WithdrawDialog extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -28,6 +37,11 @@ export class WithdrawDialog extends HTMLElement {
     this.name = this.getAttribute('name') || 'withdrawForm'
     this.from = this.getAttribute('from') || ''
     this.btn = this.getAttribute('btn') || 'Withdraw Funds'
+    this.state = {
+      ...initialState,
+      name: this.name,
+      submitTxt: this.btn,
+    }
 
     // console.warn('WithdrawDialog custom el',
     //   this.addr, this.funds, this.needed, this.msg
@@ -58,7 +72,9 @@ export class WithdrawDialog extends HTMLElement {
     dialog.innerHTML = `
       <figure>
         <form method="dialog">
-          <button value="cancel">Close</button>
+          <button value="cancel" alt="${this.state.cancelAlt}">
+            <span>${this.state.cancelTxt}</span>
+          </button>
         </form>
       </figure>
     `
@@ -66,10 +82,11 @@ export class WithdrawDialog extends HTMLElement {
     this.loadContent()
 
     dialog.id = this.getAttribute('id') || 'withdrawModal'
+    dialog.classList.add('responsive')
 
     this.handleClose = event => {
       // @ts-ignore
-      event?.target?.remove()
+      // event?.target?.remove()
       // @ts-ignore
       shadowRoot.host?.remove()
 

@@ -6,9 +6,9 @@ import {
   getAddrRows,
 } from '../../lib/ui.js'
 import {
-  storeKeys,
+  // storePhraseOrWif,
   getStoredKeys,
-  swapStorage,
+  // swapStorage,
 } from '../../lib/storage.js'
 
 /** @type {document} */
@@ -35,6 +35,9 @@ export class WithdrawForm extends HTMLElement {
       }
       form fieldset {
         min-width: 1rem;
+      }
+      form fieldset button {
+        border: 0 solid transparent;
       }
     `
 

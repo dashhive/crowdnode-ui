@@ -24,6 +24,15 @@ let acceptOnly = acceptTerms + offset;
 let signupFees = signupOnly + acceptOnly;
 let signupTotal = signupFees + (2 * feeEstimate);
 
+const initialState = {
+  id: 'Modal',
+  name: 'signup',
+  submitTxt: 'Signup',
+  submitAlt: 'Signup for CrowdNode',
+  cancelTxt: 'Cancel',
+  cancelAlt: 'Cancel CrowdNode Signup',
+}
+
 export class SignupDialog extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -39,6 +48,11 @@ export class SignupDialog extends HTMLElement {
     this.name = this.getAttribute('name') || 'signup'
     this.btn = this.getAttribute('btn') || 'Signup for CrowdNode'
     this.address = this.getAttribute('address') || ''
+    this.state = {
+      ...initialState,
+      name: this.name,
+      submitTxt: this.btn,
+    }
 
     // console.warn('SignupDialog custom el',
     //   this.addr, this.funds, this.needed, this.msg
@@ -60,15 +74,18 @@ export class SignupDialog extends HTMLElement {
     // this.style = style // this makes things go boom. DO NOT USE
     this.progress = progress
 
+    this.render = this.render.bind(this);
     this.loadContent = this.loadContent.bind(this);
     this.showModal = this.showModal.bind(this);
-    this.close = this.close.bind(this);
+    this.close = this.close.bind(this.dialog);
     this.listeners = {}
 
     dialog.innerHTML = `
       <figure>
         <form method="dialog">
-          <button value="cancel">Close</button>
+          <button value="cancel" alt="${this.state.cancelAlt}">
+            <span>${this.state.cancelTxt}</span>
+          </button>
         </form>
       </figure>
     `
@@ -76,12 +93,13 @@ export class SignupDialog extends HTMLElement {
     this.loadContent()
 
     dialog.id = this.getAttribute('id') || `${this.name}Modal`
+    dialog.classList.add('responsive')
 
-    this.handleChange = () => {}
-    this.handleSubmit = () => {}
+    // this.handleChange = () => {}
+    // this.handleSubmit = () => {}
     this.handleClose = event => {
       // @ts-ignore
-      event?.target?.remove()
+      // event?.target?.remove()
       // @ts-ignore
       shadowRoot.host?.remove()
 
@@ -102,7 +120,8 @@ export class SignupDialog extends HTMLElement {
       // }
     }
 
-    document.addEventListener('set:pass', this.handleSetPass)
+    window.removeEventListener('set:pass', this.handleSetPass)
+    window.addEventListener('set:pass', this.handleSetPass, { once: true })
     dialog.addEventListener('close', this.handleClose)
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
@@ -126,20 +145,15 @@ export class SignupDialog extends HTMLElement {
     // console.log('SignupDialog close', this,
     //   this.addr, this.funds, this.needed, this.msg
     // )
-    this.dialog?.close()
+    this.removeEventListener('close', this.handleClose)
+    this.close(e)
   }
 
   showModal(e) {
     this.dialog?.showModal()
   }
 
-  loadContent() {
-    // console.log('SignupDialog loadContent', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
-
-    this.form.setAttribute('name', `${this.name}Form`)
-
+  render() {
     this.form.innerHTML = `
       <fieldset>
         <label>
@@ -149,6 +163,17 @@ export class SignupDialog extends HTMLElement {
         <button name="signup" type="submit" disabled>${this.btn}</button>
       </fieldset>
     `
+  }
+
+  loadContent() {
+    // console.log('SignupDialog loadContent', this,
+    //   this.addr, this.funds, this.needed, this.msg
+    // )
+
+    this.form.setAttribute('name', `${this.name}Form`)
+
+    this.render()
+
     this.handleChange = async event => {
       console.log(
         'signup handleChange',
@@ -200,11 +225,27 @@ export class SignupDialog extends HTMLElement {
           'to signup for CrowdNode'
         )
 
+        let cnStatus = await CrowdNode.status(this.address, hotwallet);
+        let cnSignup
+        let cnAccept
 
-        let cnSignup = await CrowdNode.signup(fromWif, hotwallet);
-        console.log('signupCrowdNodeForm', cnSignup)
-        let cnAccept = await CrowdNode.accept(fromWif, hotwallet);
-        console.log('acceptCrowdNodeForm', cnAccept)
+        if (
+          !cnStatus ||
+          cnStatus?.signup === 0
+        ) {
+          cnSignup = await CrowdNode.signup(fromWif, hotwallet);
+          console.log('signup for CrowdNode', cnSignup)
+        }
+        if (
+          cnStatus?.signup > 0 && cnStatus?.accept === 0
+        ) {
+          this.btn = this.getAttribute('btn') || 'Accept CrowdNode Terms of Service'
+
+          this.render()
+
+          cnAccept = await CrowdNode.accept(fromWif, hotwallet);
+          console.log('accept terms of service for CrowdNode', cnAccept)
+        }
 
         document.getElementById('pageLoader').remove()
 
@@ -221,9 +262,12 @@ export class SignupDialog extends HTMLElement {
       this.close()
     }
 
-    document.addEventListener('set:pass', this.handleSetPass)
+    window.removeEventListener('set:pass', this.handleSetPass)
+    window.addEventListener('set:pass', this.handleSetPass, { once: true })
     this.dialog.addEventListener('close', this.handleClose)
-    this.form.addEventListener('submit', this.handleSubmit)
+    if (this.handleSubmit) {
+      this.form.addEventListener('submit', this.handleSubmit)
+    }
     this.form.acceptToS.addEventListener('change', this.handleChange)
 
     this.dialog.querySelector('figure')
@@ -238,7 +282,7 @@ export class SignupDialog extends HTMLElement {
   disconnectedCallback(e) {
     console.log('SignupDialog removed from page.', e);
 
-    document.removeEventListener('set:pass', this.handleSetPass)
+    window.removeEventListener('set:pass', this.handleSetPass)
     this.dialog.removeEventListener('close', this.handleClose)
     this.form.removeEventListener('submit', this.handleSubmit)
     this.form.acceptToS.removeEventListener('change', this.handleChange)
@@ -257,17 +301,41 @@ export class SignupDialog extends HTMLElement {
       this[name] = newValue || ''
     }
 
-    document.removeEventListener('set:pass', this.handleSetPass)
+    window.removeEventListener('set:pass', this.handleSetPass)
     this.dialog.removeEventListener('close', this.handleClose)
     this.form.removeEventListener('submit', this.handleSubmit)
     this.form.acceptToS.removeEventListener('change', this.handleChange)
+
     this.loadContent()
   }
 }
 
-export const init = (n = 'signup-dialog', el = SignupDialog) => customElements.define(
-  n,
-  el,
+export const init = (
+  name = 'signup-dialog',
+  con = SignupDialog
+) => customElements.define(
+  name,
+  con,
 );
+
+// export const init = (state) => {
+//   let defaultState = {
+//     n: 'signup-dialog',
+//     el: (state) => {
+//       globalState = state
+//       return SignupDialog
+//     }
+//   }
+
+//   globalState = {
+//     ...defaultState,
+//     ...state,
+//   }
+
+//   return customElements.define(
+//     globalState.n,
+//     globalState.el(globalState),
+//   );
+// }
 
 export default init
