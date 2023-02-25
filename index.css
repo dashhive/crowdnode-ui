@@ -420,6 +420,55 @@ form fieldset.inline button {
   border: 1px solid var(--hc);
 }
 
+/* form.modal {
+  padding: 1rem;
+} */
+form.modal fieldset {
+  min-width: 1rem;
+  border: 0;
+  margin: 0;
+  padding: 1rem;
+}
+form.modal fieldset label {
+  position: relative;
+  min-width: auto;
+  gap: 0;
+}
+form.modal fieldset label.percent {
+  padding-right: 1rem;
+}
+form.modal fieldset label.percent::after {
+  position: absolute;
+  right: 0;
+  content: '%';
+  font-size: 1.5rem;
+}
+form.modal fieldset.inline {
+  /* margin-bottom: 1rem; */
+  height: auto;
+}
+form.modal fieldset.inline input[name="percentRange"] {
+  flex: 1 1 auto;
+  margin-right: 2rem;
+}
+form.modal fieldset.inline input[name="percent"] {
+  min-width: 1rem;
+  max-width: 6rem;
+  border: 0 solid var(--inpbd);
+  text-align: right;
+}
+
+form.btn {
+  margin: 0;
+}
+form.btn fieldset {
+  border: 0;
+  min-width: 1rem;
+}
+form.btn fieldset button {
+  border: 0 solid transparent;
+}
+
 a {
   color: var(--linkfg);
   text-decoration: none;
@@ -662,6 +711,7 @@ progress#pageLoader[role] {
   left: 0;
   width: 100vw;
   height: 6px;
+  z-index: 11;
 }
 
 progress#pageLoader:indeterminate {
@@ -679,11 +729,11 @@ progress#pageLoader:indeterminate {
 }
 
 @-webkit-keyframes await-page-progress {
-  0%   { background-position: 0; }
+  0%   { background-position: -100vw; }
   100% { background-position: 100vw; }
 }
 @keyframes await-page-progress {
-  0%   { background-position: 0; }
+  0%   { background-position: -100vw; }
   100% { background-position: 100vw; }
 }
 
@@ -699,8 +749,6 @@ dialog::backdrop {
   background: var(--mdlbd);
 }
 
-dialog#withdrawModal,
-dialog#fundingModal,
 dialog.responsive {
   position: fixed;
   display: flex;
@@ -717,13 +765,6 @@ dialog.responsive {
   z-index: 9;
   padding: 2rem;
 }
-dialog h4 {
-  margin: .5rem auto;
-}
-dialog h4 + h3 {
-  font-size: 2rem;
-  margin-top: .5rem;
-}
 dialog form {
   max-width: 100%;
   width: 100%;
@@ -736,40 +777,50 @@ dialog form {
 dialog.responsive form {
   justify-content: center;
 }
-dialog.responsive form fieldset:first-child {
+dialog.responsive fieldset:first-child {
   justify-content: center;
   flex: 1 1 auto;
   text-align: left;
 }
 dialog.responsive form > fieldset:first-child > input,
-dialog.responsive form fieldset:last-child {
+dialog.responsive fieldset:last-child {
   flex: 0 1 auto;
 }
-dialog.responsive form button[type="submit"] {
+dialog.responsive fieldset:last-child {
+  padding: 0;
+}
+dialog.responsive button[type="submit"] {
   flex: 1 1 auto;
 }
-dialog.responsive form button[type="reset"] {
+dialog.responsive button[type="reset"] {
   position: absolute;
   top: 0;
   left: 0;
   flex: 0 1 auto;
   width: auto;
-}
-dialog.responsive form button[type="reset"] {
   border: 0 solid transparent;
   background-color: transparent;
+  transition: none;
 }
-dialog.responsive form button[type="reset"]:focus {
+dialog.responsive button[type="reset"]:focus {
   outline: 0;
 }
-dialog.responsive form button[type="reset"] span {
-  display: none;
-}
-dialog.responsive form button[type="reset"]::before {
+dialog.responsive button[type="reset"]::before {
   content: '←';
   font-size: 2rem;
 }
-/* ← */
+dialog.responsive button[type="reset"] span {
+  display: none;
+}
+
+dialog h4 {
+  margin: .5rem auto;
+}
+dialog h4 + h3 {
+  font-size: 2rem;
+  margin-top: .5rem;
+}
+
 dialog figure {
   margin: 0;
   flex: 1 1 auto;
@@ -835,8 +886,6 @@ section.page.active {
     flex-direction: row;
   }
 
-  dialog#withdrawModal,
-  dialog#fundingModal,
   dialog.responsive {
     position: fixed;
     top: 0px;
@@ -850,36 +899,42 @@ section.page.active {
   dialog.responsive form {
     justify-content: space-between;
   }
-  dialog.responsive form fieldset:first-child {
+  dialog.responsive fieldset:first-child {
     justify-content: center;
     flex: none;
     margin-bottom: 1rem;
   }
   dialog.responsive form > fieldset:first-child > input,
-  dialog.responsive form fieldset:last-child {
+  dialog.responsive fieldset:last-child {
     flex: none;
   }
-  dialog.responsive form button[type="submit"] {
+  dialog.responsive button[type="submit"] {
     flex: none;
   }
-  dialog.responsive form button[type="reset"] {
+  dialog.responsive button[type="reset"] {
     position: initial;
-    border-width: 1px;
+    border: 1px solid transparent;
     /* background-color: var(--btnbg); */
+    /* text-align: left;
+    padding-left: 0;
+    padding-right: 0; */
   }
-  dialog.responsive form button[type="reset"]:hover {
+  dialog.responsive button[type="reset"]:last-child {
+    flex: 1 1 auto;
+  }
+  dialog.responsive button[type="reset"]:hover {
     /* background-color: var(--btnbgh); */
     color: var(--dang);
   }
-  dialog.responsive form button[type="reset"]:focus {
+  dialog.responsive button[type="reset"]:focus {
     outline: 0;
     outline: 1px solid -webkit-focus-ring-color;
   }
-  dialog.responsive form button[type="reset"] span {
-    display: initial;
-  }
-  dialog.responsive form button[type="reset"]::before {
+  dialog.responsive button[type="reset"]::before {
     content: none;
+  }
+  dialog.responsive button[type="reset"] span {
+    display: initial;
   }
   dialog.responsive form fieldset.inline {
     justify-content: space-between;
