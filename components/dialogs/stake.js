@@ -7,36 +7,14 @@ import {
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
-  // initEncryptedStore,
-  // encryptKeys,
-  // store,
-  // ENCRYPT_IV,
 } from '../../lib/storage.js'
 import { getPrivateKey } from '../../lib/storage.js'
 import {
-  // Secp256k1,
-  // Base58Check,
-  // RIPEMD160,
-  // DashApi,
-  // DashHd,
-  // DashPhrase,
-  // DashKeys,
-  // DashSight,
-  // DashSocket,
   CrowdNode,
 } from '../../imports.js'
 
 const { hotwallet } = CrowdNode.main;
 const { depositMinimum, stakeMinimum } = CrowdNode
-const { signupForApi, acceptTerms, offset } = CrowdNode.requests;
-let feeEstimate = 500;
-let signupOnly = signupForApi + offset;
-let acceptOnly = acceptTerms + offset;
-let signupFees = signupOnly + acceptOnly;
-let signupTotal = signupFees + 2 * feeEstimate;
-
-let encryptedStore
-// let passphrase
 
 const initialState = {
   id: 'Modal',
@@ -107,6 +85,7 @@ export function setupStakeDialog(el, state = {}) {
     event?.target?.remove()
 
     let storedKeys = await getStoredKeys(state.passphrase)
+
     await getAddrRows(
       document.querySelector('#addressList tbody'),
       storedKeys,
@@ -117,12 +96,6 @@ export function setupStakeDialog(el, state = {}) {
     )
 
     console.log('storedKeys', storedKeys)
-
-    // if (this.listeners['close']?.length > 0) {
-    //   for (let callback of this.listeners['close']) {
-    //     callback(this.dialog)
-    //   }
-    // }
   }
 
   let handleReset = event => {
@@ -134,34 +107,6 @@ export function setupStakeDialog(el, state = {}) {
 
   let handleSubmit = async event => {
     event.preventDefault()
-
-    // console.log(
-    //   'crowdnode stake',
-    // )
-
-    // if (state.address) {
-    //   // dialog.setAttribute('address', state.address);
-
-    //   console.log('stake modal', dialog)
-
-    //   // let stakeModal = requestWithdraw(name, from)
-
-    //   // dialog?.showModal();
-    //   // dialog?.on('close', async event => {})
-
-    //   document.getElementById('pageLoader')?.remove()
-
-    //   document.body.insertAdjacentHTML(
-    //     'afterbegin',
-    //     `<progress id="pageLoader" class="pending"></progress>`,
-    //   )
-
-    //   document.getElementById('pageLoader').remove()
-
-    //   form?.removeEventListener('submit', handleSubmit)
-
-    //   dialog.close('staked')
-    // }
 
     const amount = event.target.amount?.value
 
