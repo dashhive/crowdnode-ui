@@ -1,4 +1,9 @@
-import { Base58Check, } from './imports.js'
+import {
+  Base58Check,
+  DashHd,
+  DashPhrase,
+  DashKeys,
+} from './imports.js'
 
 export const DUFFS = 100000000;
 
@@ -176,4 +181,85 @@ export function fixedDASH(dash, fix = 8) {
  */
 export function toDuff(dash) {
   return Math.round(parseFloat(dash) * DUFFS);
+}
+
+/**
+ * @param {string} name - 'change'
+ * @param {any} data - { some: 'thing' }
+ * @param {Window | Document | Element} [el=window] - window
+ */
+export function trigger(name, data, el = window) {
+  return el.dispatchEvent(
+    new CustomEvent(name, {
+      bubbles: true,
+      cancelable: false,
+      composed: true,
+      detail: data
+    })
+  )
+}
+
+export function isDecryptedPhraseOrWif(phraseOrWIF) {
+  let rpArr = phraseOrWIF?.split(' ')
+  return phraseOrWIF !== null && (
+    rpArr?.length >= 12 || (
+      phraseOrWIF?.length > 4 &&
+      phraseOrWIF?.length < 53
+    )
+  )
+}
+
+export async function generateRecoveryPhrase(phraseOrWIF) {
+  let recoveryPhraseArr = phraseOrWIF?.split(' ')
+  let targetBitEntropy = 128;
+  let secretSalt = ''; // "TREZOR";
+  let recoveryPhrase
+  let seed
+  let wallet
+  let accountIndex = 0;
+  let account
+  let use = DashHd.RECEIVE;
+  let xkey
+  let xprv
+  let xpub
+  let key
+  let privateKey
+  let wif
+  let address
+
+  if (recoveryPhraseArr?.length >= 12) {
+    recoveryPhrase = phraseOrWIF
+  }
+  if (!phraseOrWIF) {
+    recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
+  }
+
+  if (phraseOrWIF) {
+    privateKey = await wifToPrivateKey(phraseOrWIF)
+    address = await DashKeys.wifToAddr(phraseOrWIF);
+    // recoveryPhrase = await DashPhrase.encode(wifToPK);
+  } else {
+    seed = await DashPhrase.toSeed(recoveryPhrase, secretSalt);
+    wallet = await DashHd.fromSeed(seed);
+    account = await wallet.deriveAccount(accountIndex);
+    xkey = await account.deriveXKey(use);
+    xprv = await DashHd.toXPrv(xkey);
+    xpub = await DashHd.toXPub(xkey);
+    key = await xkey.deriveAddress(use);
+    address = await DashHd.toAddr(key.publicKey);
+  }
+
+  wif = await DashHd.toWif(key?.privateKey || privateKey);
+
+  return {
+    recoveryPhrase,
+    seed,
+    wallet,
+    account,
+    xkey,
+    xprv,
+    xpub,
+    wif,
+    address
+  }
 }

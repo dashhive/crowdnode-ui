@@ -1,6 +1,9 @@
 // import { getEncryptedStorage, } from './CryptStore.js';
 // import { qrSvg, } from './qr.js';
-import { toDuff, toDash, fixedDASH, wifToPrivateKey } from './utils.js'
+import {
+  toDuff, toDash, fixedDASH, wifToPrivateKey,
+  trigger, generateRecoveryPhrase
+} from './utils.js'
 import {
   getAddrRows,
   getPublicKeysFromWIFS,
@@ -9,31 +12,37 @@ import {
   displayBalances,
 } from './lib/ui.js'
 import {
-  storeKeys,
+  storePhraseOrWif,
   getStoredKeys,
   swapStorage,
   initEncryptedStore,
+  encryptKeys,
 } from './lib/storage.js'
 import {
   // Secp256k1,
   // Base58Check,
   // RIPEMD160,
   // DashApi,
-  DashHd,
-  DashPhrase,
-  DashKeys,
+  // DashHd,
+  // DashPhrase,
+  // DashKeys,
   // DashSight,
   // DashSocket,
   CrowdNode,
 } from './imports.js'
+
+import setupEncryptDialog from './components/dialogs/encrypt.js'
+
 // import './components/format-to-dash.js'
 import defineFormatToDash, { init as ftdInit } from './components/format-to-dash.js'
 import defineQrDialog, { init as qrInit } from './components/dialogs/qr.js'
 import defineWithdrawDialog, { init as withdrawDialogInit } from './components/dialogs/withdraw.js'
 import defineSignupDialog, { init as signupDialogInit } from './components/dialogs/signup.js'
+import defineUnstakeDialog, { init as unstakeDialogInit } from './components/dialogs/unstake.js'
 import defineDepositForm, { init as depositFormInit } from './components/forms/deposit.js'
 import defineWithdrawForm, { init as withdrawFormInit } from './components/forms/withdraw.js'
 import defineSignupForm, { init as signupFormInit } from './components/forms/signup.js'
+import defineUnstakeForm, { init as unstakeFormInit } from './components/forms/unstake.js'
 
 /** @type {document} */
 const $d = document;
@@ -92,64 +101,17 @@ function resetFormFields() {
   $d.balanceForm.querySelector('fieldset').disabled = true
 }
 
-async function generateRecoveryPhrase(wifPk) {
-  let targetBitEntropy = 128;
-  let secretSalt = ''; // "TREZOR";
-  let recoveryPhrase
-  let seed
-  let wallet
-  let accountIndex = 0;
-  let account
-  let use = DashHd.RECEIVE;
-  let xkey
-  let xprv
-  let xpub
-  let key
-  let privateKey
-  let wif
-  let address
-
-  if (wifPk) {
-    privateKey = await wifToPrivateKey(wifPk)
-    address = await DashKeys.wifToAddr(wifPk);
-    // recoveryPhrase = await DashPhrase.encode(wifToPK);
-    // seed = await DashPhrase.toSeed(wifToPK, secretSalt);
-  } else {
-    recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
-    seed = await DashPhrase.toSeed(recoveryPhrase, secretSalt);
-    wallet = await DashHd.fromSeed(seed);
-    account = await wallet.deriveAccount(accountIndex);
-    xkey = await account.deriveXKey(use);
-    xprv = await DashHd.toXPrv(xkey);
-    xpub = await DashHd.toXPub(xkey);
-    key = await xkey.deriveAddress(use);
-    address = await DashHd.toAddr(key.publicKey);
-  }
-
-  wif = await DashHd.toWif(key?.privateKey || privateKey);
-
-  return {
-    recoveryPhrase,
-    seed,
-    wallet,
-    account,
-    xkey,
-    xprv,
-    xpub,
-    wif,
-    address
-  }
-}
-
 export default async function main() {
   // ftdInit()
   defineFormatToDash()
   defineQrDialog()
   defineWithdrawDialog()
   defineSignupDialog()
+  defineUnstakeDialog()
   defineDepositForm()
   defineWithdrawForm()
   defineSignupForm()
+  defineUnstakeForm()
 
   currentPage = location.pathname.slice(1) || 'onboarding'
   console.log('main location', currentPage, location.hash, location.search)
@@ -180,19 +142,32 @@ export default async function main() {
   if (currentPage === PAGE_WALLET) {
     console.info('ON PAGE:', PAGE_WALLET)
     // let keys = await getStoredKeys()
-    let addrRows = await getAddrRows(_privateKeys, passphrase)
+    let addrRows = await getAddrRows(_privateKeys,
+      {
+        status: () => trigger("set:pass", passphrase)
+      }
+    )
 
     console.info('WALLET ROWS', _privateKeys)
 
     $d.querySelector('#addressList tbody')
       .insertAdjacentHTML('afterbegin', addrRows)
 
-    document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
+    trigger('set:pass', passphrase);
   }
 
   // loadKeys(_privateKeys)
 
   console.log('un/encrypted private keys', _privateKeys)
+
+  $d.querySelector('nav .encrypt')
+    .addEventListener('click', async event => {
+      event.preventDefault()
+
+      let encryptDialog = setupEncryptDialog($d.querySelector("main"))
+
+      encryptDialog.showModal()
+    })
 
   $d.encPrivKey
     .addEventListener('submit', async event => {
@@ -228,62 +203,62 @@ export default async function main() {
       }
     })
 
-  $d.encryptWallet
-    .addEventListener('submit', async event => {
-      event.preventDefault()
+    // $d.encryptWallet
+    //   .addEventListener('submit', async event => {
+    //     event.preventDefault()
 
-      // @ts-ignore
-      passphrase = event.target.passphrase?.value
+    //     // @ts-ignore
+    //     passphrase = event.target.passphrase?.value
 
-      const storedKeys = await getStoredKeys()
-      const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
+    //     const storedKeys = await getStoredKeys()
+    //     const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
 
-      if (passphrase) {
-        // console.log('passphrase', passphrase)
+    //     if (passphrase) {
+    //       // console.log('passphrase', passphrase)
 
-        // @ts-ignore
-        event.target.passphrase.value = ''
+    //       // @ts-ignore
+    //       event.target.passphrase.value = ''
 
-        encryptedStore = await initEncryptedStore(passphrase)
+    //       await encryptKeys(storedKeys, passphrase)
 
-        const decryptedStoredKeys = await getStoredKeys(passphrase)
+    //       encryptedStore = await initEncryptedStore(passphrase)
 
-        for (let [address, wif] of storedKeys) {
-          if (wif.length < 53) {
-            console.log('stored key', address, wif.length)
-            storeKeys({ address, wif }, passphrase)
-          }
-        }
+    //       const decryptedStoredKeys = await getStoredKeys(passphrase)
 
-        let addrRows = await getAddrRows(decryptedStoredKeys, passphrase)
+    //       let addrRows = await getAddrRows(
+    //         decryptedStoredKeys,
+    //         {
+    //           status: () => trigger("set:pass", passphrase)
+    //         }
+    //       )
 
-        // console.info('WALLET ROWS', storedKeys, addrRows)
+    //       // console.info('WALLET ROWS', storedKeys, addrRows)
 
-        $d.querySelector('#addressList tbody').innerHTML = addrRows
-        document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
+    //       $d.querySelector('#addressList tbody').innerHTML = addrRows
+    //       trigger("set:pass", passphrase);
 
-        // storeKeys()
+    //       // storeKeys()
 
-        // const privateKeysExists = await encryptedStore.hasItem(`${ENCRYPT_IV}_iv`)
+    //       // const privateKeysExists = await encryptedStore.hasItem(`${ENCRYPT_IV}_iv`)
 
-        // const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
+    //       // const privateKeys = JSON.parse(await encryptedStore.getItem(PK))
 
-        console.log('encryptWallet form selectedPrivateKey', {
-          selectedPrivateKey,
-          storedKeys,
-          decryptedStoredKeys,
-          isStoreEncrypted,
-          el: decryptedStoredKeys.length,
-          ul: storedKeys.length,
-          // privateKeysExists,
-          // privateKeys
-        })
+    //       console.log('encryptWallet form selectedPrivateKey', {
+    //         selectedPrivateKey,
+    //         storedKeys,
+    //         decryptedStoredKeys,
+    //         isStoreEncrypted,
+    //         el: decryptedStoredKeys.length,
+    //         ul: storedKeys.length,
+    //         // privateKeysExists,
+    //         // privateKeys
+    //       })
 
-        $d.privKeyForm.querySelector('button').disabled = false
+    //       $d.privKeyForm.querySelector('button').disabled = false
 
-        // loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
-      }
-    })
+    //       // loadKeys(selectedPrivateKey ? [selectedPrivateKey] : privateKeys)
+    //     }
+    //   })
 
   $d.privKeyForm
     .addEventListener('input', async (
@@ -386,16 +361,23 @@ export default async function main() {
 
       // Generate the new Public & Private Keys
       myKeys = await generateRecoveryPhrase(privateKey)
+      let { address, wif, recoveryPhrase } = myKeys
+      let unstoredKeys = [address, recoveryPhrase || wif]
 
       // Store new keys in localStorage
-      storeKeys(myKeys, passphrase)
+      // @ts-ignore
+      storePhraseOrWif(unstoredKeys, passphrase)
       let storedKeys = await getStoredKeys(passphrase)
-      let addrRows = await getAddrRows(storedKeys, passphrase)
+      let addrRows = await getAddrRows(storedKeys,
+        {
+          status: () => trigger("set:pass", passphrase)
+        }
+      )
 
       // console.info('WALLET ROWS', storedKeys, addrRows)
 
       $d.querySelector('#addressList tbody').innerHTML = addrRows
-      document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
+      trigger("set:pass", passphrase);
 
       console.log('generateRecoveryPhrase', myKeys, storedKeys)
 
@@ -412,15 +394,23 @@ export default async function main() {
 
       // Generate the new Public & Private Keys
       myKeys = await generateRecoveryPhrase()
+      let { address, wif, recoveryPhrase } = myKeys
+      let unstoredKeys = [address, recoveryPhrase || wif]
+
       // Store new keys in localStorage
-      storeKeys(myKeys, passphrase)
+      // @ts-ignore
+      storePhraseOrWif(unstoredKeys, passphrase)
       let storedKeys = await getStoredKeys(passphrase)
-      let addrRows = await getAddrRows(storedKeys, passphrase)
+      let addrRows = await getAddrRows(storedKeys,
+        {
+          status: () => trigger("set:pass", passphrase)
+        }
+      )
 
       // console.info('WALLET ROWS', storedKeys, addrRows)
 
       $d.querySelector('#addressList tbody').innerHTML = addrRows
-      document.dispatchEvent(new CustomEvent("set:pass", { detail: passphrase }));
+      trigger("set:pass", passphrase);
       // $d.querySelector('#addressList tbody')
       //   .insertAdjacentHTML('afterbegin', addrRows)
 
