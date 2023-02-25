@@ -269,7 +269,7 @@ nav a.theme {
 }
 
 header {
-  margin: 0 auto;
+  margin: 2rem auto 1rem;
   padding: 0 2rem;
   max-width: 1100px;
   min-height: 85px;
@@ -277,7 +277,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-direction: column-reverse;
+  /* flex-direction: column-reverse; */
 }
 header aside {
   display: flex;
@@ -700,11 +700,12 @@ dialog::backdrop {
 }
 
 dialog#withdrawModal,
-dialog#fundingModal {
+dialog#fundingModal,
+dialog.responsive {
   position: fixed;
   display: flex;
-  /* top: 0; */
-  top: 3rem;
+  top: 0;
+  /* top: 3rem; */
   bottom: 0;
   height: auto;
   /* height: 100vh; */
@@ -732,6 +733,43 @@ dialog form {
   flex-direction: column;
   justify-content: space-between;
 }
+dialog.responsive form {
+  justify-content: center;
+}
+dialog.responsive form fieldset:first-child {
+  justify-content: center;
+  flex: 1 1 auto;
+  text-align: left;
+}
+dialog.responsive form > fieldset:first-child > input,
+dialog.responsive form fieldset:last-child {
+  flex: 0 1 auto;
+}
+dialog.responsive form button[type="submit"] {
+  flex: 1 1 auto;
+}
+dialog.responsive form button[type="reset"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex: 0 1 auto;
+  width: auto;
+}
+dialog.responsive form button[type="reset"] {
+  border: 0 solid transparent;
+  background-color: transparent;
+}
+dialog.responsive form button[type="reset"]:focus {
+  outline: 0;
+}
+dialog.responsive form button[type="reset"] span {
+  display: none;
+}
+dialog.responsive form button[type="reset"]::before {
+  content: '←';
+  font-size: 2rem;
+}
+/* ← */
 dialog figure {
   margin: 0;
   flex: 1 1 auto;
@@ -774,6 +812,7 @@ section.page.active {
     max-width: 80%;
   }
   header {
+    margin: 0 auto;
     flex-direction: row;
   }
 
@@ -797,7 +836,8 @@ section.page.active {
   }
 
   dialog#withdrawModal,
-  dialog#fundingModal {
+  dialog#fundingModal,
+  dialog.responsive {
     position: fixed;
     top: 0px;
     /* height: 90vh; */
@@ -807,6 +847,44 @@ section.page.active {
     opacity: 1;
     z-index: 9;
   }
+  dialog.responsive form {
+    justify-content: space-between;
+  }
+  dialog.responsive form fieldset:first-child {
+    justify-content: center;
+    flex: none;
+    margin-bottom: 1rem;
+  }
+  dialog.responsive form > fieldset:first-child > input,
+  dialog.responsive form fieldset:last-child {
+    flex: none;
+  }
+  dialog.responsive form button[type="submit"] {
+    flex: none;
+  }
+  dialog.responsive form button[type="reset"] {
+    position: initial;
+    border-width: 1px;
+    /* background-color: var(--btnbg); */
+  }
+  dialog.responsive form button[type="reset"]:hover {
+    /* background-color: var(--btnbgh); */
+    color: var(--dang);
+  }
+  dialog.responsive form button[type="reset"]:focus {
+    outline: 0;
+    outline: 1px solid -webkit-focus-ring-color;
+  }
+  dialog.responsive form button[type="reset"] span {
+    display: initial;
+  }
+  dialog.responsive form button[type="reset"]::before {
+    content: none;
+  }
+  dialog.responsive form fieldset.inline {
+    justify-content: space-between;
+  }
+
   dialog h4 {
     margin: 1rem auto;
   }
