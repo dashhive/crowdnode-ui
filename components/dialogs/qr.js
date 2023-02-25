@@ -2,6 +2,15 @@ import { toDash } from '../../utils.js'
 import { qrSvg, } from '../../qr.js'
 import { copyToClipboard } from '../../lib/ui.js'
 
+const initialState = {
+  id: 'Modal',
+  name: 'qr',
+  // submitTxt: 'Encrypt/Decrypt',
+  // submitAlt: 'Encrypt/Decrypt Wallet',
+  cancelTxt: 'Cancel',
+  cancelAlt: 'Cancel',
+}
+
 export class QrDialog extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -19,12 +28,16 @@ export class QrDialog extends HTMLElement {
     this.funds = JSON.parse(this.getAttribute('funds'))
     this.needed = Number(this.getAttribute('needed')) || 0
     this.msg = this.getAttribute('msg') || ''
+    this.state = {
+      ...initialState
+    }
 
     // console.warn('QrDialog custom el',
     //   this.addr, this.funds, this.needed, this.msg
     // )
 
     let dialog = document.createElement('dialog')
+    let form = document.createElement('form')
     const style = document.createElement('style')
 
     style.textContent = `
@@ -40,6 +53,7 @@ export class QrDialog extends HTMLElement {
     this.loadQr()
 
     dialog.id = this.getAttribute('id') || 'fundingModal'
+    dialog.classList.add('responsive')
 
     this.handleClose = event => {
       // @ts-ignore
@@ -53,10 +67,17 @@ export class QrDialog extends HTMLElement {
         }
       }
     }
+    this.handleReset = event => {
+      event.preventDefault()
+      console.log('qr dialog handleReset', event)
+      this.form?.removeEventListener('close', this.handleReset)
+      this.dialog.close('cancel')
+    }
 
     dialog.addEventListener('close', this.handleClose)
 
     this.dialog = dialog
+    this.form = form
 
     const shadowRoot = this.attachShadow({mode: 'open'});
     shadowRoot.appendChild(style);
@@ -117,23 +138,32 @@ export class QrDialog extends HTMLElement {
       this.dialog.innerHTML = `
         <figure>
           <progress class="pending"></progress>
-          <form name="qrCopyAddr">
-            <h4>Current Wallet Balance</h4>
-            <h3><format-to-dash value="${this.funds.balance}" /></h3>
-            ${dashSvg}
-            <figcaption>
-              <fieldset class="inline">
-                <input name="qrAddr" value="${this.addr}" spellcheck="false" />
-                <button>📋</button>
-              </fieldset>
-              ${fundingDiff}
-            </figcaption>
-          </form>
-          <form method="dialog">
-            <button value="cancel">Close</button>
-          </form>
         </figure>
       `
+      this.form.name = 'qrCopyAddr'
+      this.form.innerHTML = `
+        <h4>Current Wallet Balance</h4>
+        <h3><format-to-dash value="${this.funds.balance}" /></h3>
+        ${dashSvg}
+        <figcaption>
+          <fieldset class="inline">
+            <input name="qrAddr" value="${this.addr}" spellcheck="false" />
+            <button>📋</button>
+          </fieldset>
+          ${fundingDiff}
+        </figcaption>
+
+        <fieldset class="inline">
+          <button type="reset" alt="${this.state.cancelAlt}">
+            <span>${this.state.cancelTxt}</span>
+          </button>
+        </fieldset>
+      `
+
+      this.form.addEventListener('reset', this.handleReset)
+
+      this.dialog.querySelector('figure')
+        .insertAdjacentElement('beforeend', this.form)
 
       this.dialog?.querySelector('form[name=qrCopyAddr] button')?.addEventListener('click', copyToClipboard)
     }

@@ -31,6 +31,9 @@ export class DepositForm extends HTMLElement {
       form fieldset {
         min-width: 1rem;
       }
+      form fieldset button {
+        border: 0 solid transparent;
+      }
     `
 
     // <format-to-dash value="${walletFunds.balance}" />

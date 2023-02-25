@@ -1,16 +1,6 @@
 import {
   CrowdNode,
 } from '../../imports.js'
-import {
-  hasOrRequestFunds,
-  requestWithdraw,
-  getAddrRows,
-} from '../../lib/ui.js'
-import {
-  storeKeys,
-  getStoredKeys,
-  swapStorage,
-} from '../../lib/storage.js'
 
 /** @type {document} */
 const $d = document;
@@ -38,6 +28,9 @@ export class SignupForm extends HTMLElement {
       }
       form fieldset {
         min-width: 1rem;
+      }
+      form fieldset button {
+        border: 0 solid transparent;
       }
     `
 
