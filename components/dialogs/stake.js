@@ -7,8 +7,8 @@ import {
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
+  getPrivateKey,
 } from '../../lib/storage.js'
-import { getPrivateKey } from '../../lib/storage.js'
 import {
   CrowdNode,
 } from '../../imports.js'
@@ -128,7 +128,12 @@ export function setupStakeDialog(el, state = {}) {
         depositAmount = depositMinimum
       }
 
-      console.log('privKey', state.address, state.passphrase, fromWif)
+      console.log(
+        'privKey',
+        state.address,
+        state.passphrase.length,
+        fromWif.length
+      )
 
       await hasOrRequestFunds(
         state.address,

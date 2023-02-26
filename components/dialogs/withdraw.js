@@ -4,8 +4,14 @@ import {
   DashApi,
   CrowdNode,
 } from '../../imports.js'
-import { toDuff, addrToPubKeyHash } from '../../utils.js'
-import { getPrivateKey } from '../../lib/storage.js'
+import { trigger, toDuff, addrToPubKeyHash } from '../../utils.js'
+import {
+  getAddrRows,
+} from '../../lib/ui.js'
+import {
+  getStoredKeys,
+  getPrivateKey,
+} from '../../lib/storage.js'
 
 // @ts-ignore
 let dashsight = DashSight.create({
@@ -22,266 +28,204 @@ const initialState = {
   cancelAlt: 'Cancel Dash Withdraw',
 }
 
-export class WithdrawDialog extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      'name',
-      'from',
-      'btn'
-    ];
+const { hotwallet } = CrowdNode.main;
+
+export function setupWithdrawDialog(el, state = {}) {
+  state = {
+    ...initialState,
+    ...state,
   }
 
-  constructor() {
-    super();
+  console.log('unstake dialog state', state)
 
-    this.name = this.getAttribute('name') || 'withdrawForm'
-    this.from = this.getAttribute('from') || ''
-    this.btn = this.getAttribute('btn') || 'Withdraw Funds'
-    this.state = {
-      ...initialState,
-      name: this.name,
-      submitTxt: this.btn,
-    }
+  const dialog = document.createElement('dialog')
+  const form = document.createElement('form')
+  const progress = document.createElement('progress')
 
-    // console.warn('WithdrawDialog custom el',
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
+  progress.classList.add('pending')
+  form.classList.add('modal')
 
-    const dialog = document.createElement('dialog')
-    const form = document.createElement('form')
-    const style = document.createElement('style')
-    const progress = document.createElement('progress')
+  dialog.innerHTML = `
+    <figure>
+    </figure>
+  `
 
-    progress.classList.add('pending')
+  dialog.id = `${state.name}${state.id}`
+  dialog.classList.add('responsive')
 
-    style.textContent = `
-      @import url(/index.css);
-    `
+  form.name = `${state.name}Form`
+  form.method = 'dialog'
 
-    this.dialog = dialog
-    this.form = form
-    // this.style = style // this makes things go boom. DO NOT USE
-    this.progress = progress
-    this.handleSubmit = () => {}
+  form.innerHTML = `
+    <fieldset>
+      <input
+        name="toAddress"
+        placeholder="Send to Address"
+        spellcheck="false"
+      />
+      <input
+        type="number"
+        name="amount"
+        step="0.00000001"
+        placeholder="Ðash Amount (0.001)"
+      />
+    </fieldset>
+    <fieldset class="inline">
+      <button type="reset" title="${state.cancelAlt}">
+        <span>${state.cancelTxt}</span>
+      </button>
+      <button type="submit" title="${state.submitAlt}">
+        <span>${state.submitTxt}</span>
+      </button>
+    </fieldset>
+  `
 
-    this.loadContent = this.loadContent.bind(this);
-    this.showModal = this.showModal.bind(this);
-    this.close = this.close.bind(this);
-    this.listeners = {}
+  let handleSetPass = event => {
+    event.preventDefault()
+    console.log('unstake dialog handleSetPass', event.detail)
+    state.passphrase = event.detail;
+  }
 
-    dialog.innerHTML = `
-      <figure>
-        <form method="dialog">
-          <button value="cancel" alt="${this.state.cancelAlt}">
-            <span>${this.state.cancelTxt}</span>
-          </button>
-        </form>
-      </figure>
-    `
+  let handleClose = async event => {
+    event.preventDefault()
+    console.log(`${state.name} modal handleClose`, event)
 
-    this.loadContent()
+    window.removeEventListener('set:pass', handleSetPass)
+    dialog?.removeEventListener('close', handleClose)
+    form?.removeEventListener('submit', handleSubmit)
+    form?.removeEventListener('reset', handleReset)
 
-    dialog.id = this.getAttribute('id') || 'withdrawModal'
-    dialog.classList.add('responsive')
+    // @ts-ignore
+    event?.target?.remove()
 
-    this.handleClose = event => {
-      // @ts-ignore
-      // event?.target?.remove()
-      // @ts-ignore
-      shadowRoot.host?.remove()
-
-      if (this.listeners['close']?.length > 0) {
-        for (let callback of this.listeners['close']) {
-          callback(this.dialog)
-        }
+    let storedKeys = await getStoredKeys(state.passphrase)
+    await getAddrRows(
+      document.querySelector('#addressList tbody'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
       }
-    }
-
-    dialog.addEventListener('close', this.handleClose)
-
-    const shadowRoot = this.attachShadow({mode: 'closed'});
-    shadowRoot.appendChild(style);
-    shadowRoot.appendChild(dialog);
+    )
   }
 
-  on(event, callback) {
-    this.listeners[event] = this.listeners[event] || []
-    this.listeners[event].push(callback)
+  let handleReset = event => {
+    event.preventDefault()
+    console.log(`${state.name} button handleReset`, event)
+    dialog.close('cancel')
   }
 
-  close(e) {
-    // console.log('WithdrawDialog close', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
-    this.dialog?.close()
-  }
+  let handleSubmit = async event => {
+    event.preventDefault()
 
-  showModal(e) {
-    this.dialog?.showModal()
-  }
+    const toAddr = event.target.toAddress?.value
+    const toAddrHash = await addrToPubKeyHash(toAddr)
+    const amount = event.target.amount?.value
+    const duffAmount = toDuff(amount)
 
-  loadContent() {
-    // console.log('WithdrawDialog loadContent', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
+    let tx
+    let withdrawTransfer
 
-    // <format-to-dash value="${walletFunds.balance}" />
-    this.form.setAttribute('name', this.name)
-    // span.textContent = fixedDASH(val, dec);
-    this.form.innerHTML = `
-      <fieldset>
-        <input
-          name="toAddress"
-          placeholder="Send to Address"
-          spellcheck="false"
-        />
-        <input
-          type="number"
-          name="amount"
-          step="0.00000001"
-          placeholder="Ðash Amount (0.001)"
-        />
-        <button type="submit">${this.btn}</button>
-      </fieldset>
-    `
+    console.log(
+      'withdraw funds amount',
+      {
+        amount,
+        duffAmount,
+        fromAddress: state.address,
+        toAddr,
+        toAddrHash,
+        from: state.address
+      }
+    )
 
-    this.handleSubmit = async event => {
-      event.preventDefault()
-
-      const toAddr = event.target.toAddress?.value
-      const toAddrHash = await addrToPubKeyHash(toAddr)
-      const amount = event.target.amount?.value
-      const duffAmount = toDuff(amount)
-
-      // try {
-      //   toAddrHash = await addrToPubKeyHash(toAddr)
-      // } catch (err) {
-      //   console.error('toAddrHash Invalid address', toAddr)
-      // }
-
-      let tx
+    if (state.address && toAddrHash) {
+      let fromWif = await getPrivateKey(state.address, state.passphrase) // , pass
 
       console.log(
-        'withdraw funds amount',
-        {
-          amount,
-          duffAmount,
-          toAddr,
-          toAddrHash,
-          from: this.from
-        }
+        'privKey',
+        state.address,
+        state.passphrase.length,
+        fromWif.length
       )
 
-      if (this.from && toAddrHash) {
-        let fromWif = await getPrivateKey(this.from)
-        // DashApi.create()
-        console.log(
-          'WithdrawForm transfer',
-          { from: this.from, fromWif, toAddr },
-          { amount, duffAmount,}
-        )
-        if (duffAmount) {
-          tx = await dashApi.createPayment(
-            fromWif,
-            toAddr,
-            duffAmount,
-            // from
-          );
-        } else {
-          tx = await dashApi.createBalanceTransfer(fromWif, toAddr);
-        }
+      console.log(
+        'WithdrawForm transfer',
+        { from: state.address, fromWif, toAddr },
+        { amount, duffAmount, }
+      )
 
-        let txs = tx.serialize()
+      dialog.querySelector('figure')
+        .insertAdjacentElement('afterbegin', progress)
 
-        console.log('WithdrawForm tx', txs)
+      form.querySelector('fieldset:last-child').disabled = true
 
-        const instantSend = await dashsight.instantSend(txs);
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        `<progress id="pageLoader" class="pending"></progress>`,
+      )
 
-        console.log('WithdrawForm instantSend', instantSend)
-
-        this.form.querySelector('fieldset').disabled = true
-        this.dialog.querySelector('figure')
-          .insertAdjacentElement('afterbegin', this.progress)
-
-        let withdrawTransfer = await DashSocket.waitForVout(
-          CrowdNode._dashsocketBaseUrl,
+      if (duffAmount) {
+        tx = await dashApi.createPayment(
+          fromWif,
           toAddr,
-          0,
-        )
-
-        console.log(
-          'WithdrawForm transfer',
-          withdrawTransfer,
-        )
-
-        console.error(
-          '====TRIGGER BALANCE UPDATE FOR TABLE AND/OR HEADER====',
-        )
-
-        // withdrawTransfer.address
-        // withdrawTransfer.timestamp
-        // withdrawTransfer.txid
-        // withdrawTransfer.satoshis
-        // withdrawTransfer.txlock
-
-        if (withdrawTransfer.txid && withdrawTransfer.satoshis > 0) {
-          this.dialog.querySelector('progress')?.remove()
-        }
-
-        //   $d.getElementById('pageLoader')?.remove()
-
-        //   $d.body.insertAdjacentHTML(
-        //     'afterbegin',
-        //     `<progress id="pageLoader" class="pending"></progress>`,
-        //   )
-
-        //   $d.getElementById('pageLoader').remove()
+          duffAmount,
+          // from
+        );
+      } else {
+        tx = await dashApi.createBalanceTransfer(fromWif, toAddr);
       }
 
-      this.close()
+      let txs = tx.serialize()
+
+      console.log('WithdrawForm tx', txs)
+
+      const instantSend = await dashsight.instantSend(txs);
+
+      console.log('WithdrawForm instantSend', instantSend)
+
+      withdrawTransfer = await DashSocket.waitForVout(
+        CrowdNode._dashsocketBaseUrl,
+        toAddr,
+        0,
+      )
+
+      console.log(
+        'WithdrawForm transfer',
+        withdrawTransfer,
+      )
+
+      // withdrawTransfer.address
+      // withdrawTransfer.timestamp
+      // withdrawTransfer.txid
+      // withdrawTransfer.satoshis
+      // withdrawTransfer.txlock
     }
 
-    this.dialog.addEventListener('close', this.handleClose)
-    this.form.addEventListener('submit', this.handleSubmit)
-
-    this.dialog.querySelector('figure')
-      .insertAdjacentElement('afterbegin', this.form)
-  }
-
-  connectedCallback(e) {
-    console.log('WithdrawDialog added to page.', e);
-    // updateStyle(this);
-  }
-
-  disconnectedCallback(e) {
-    console.log('WithdrawDialog removed from page.', e);
-
-    this.dialog.removeEventListener('close', this.handleClose)
-    this.form.removeEventListener('submit', this.handleSubmit)
-  }
-
-  adoptedCallback(e) {
-    console.log('WithdrawDialog moved to new page.', e);
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    console.log('WithdrawDialog attributes changed.', {name, oldValue, newValue});
-
-    if (name === 'name') {
-      this.name = newValue
-    } else {
-      this[name] = newValue || ''
+    if (withdrawTransfer.txid && withdrawTransfer.satoshis > 0) {
+      document.getElementById('pageLoader').remove()
+      dialog.querySelector('progress')?.remove()
     }
 
-    this.dialog.removeEventListener('close', this.handleClose)
-    this.form.removeEventListener('submit', this.handleSubmit)
-    this.loadContent()
+    form.querySelector('fieldset:last-child').disabled = false
+
+    dialog.close(withdrawTransfer.txid)
   }
+
+  dialog.addEventListener('close', handleClose)
+
+  form.addEventListener('reset', handleReset)
+  form.addEventListener('submit', handleSubmit)
+
+  window.addEventListener('set:pass', handleSetPass) //,  { once: true }
+
+  dialog.querySelector('figure')
+    .insertAdjacentElement('afterbegin', form)
+
+  el.insertAdjacentElement('afterend', dialog)
+
+  // dialog.showModal()
+
+  return dialog
 }
 
-export const init = (n = 'withdraw-dialog') => customElements.define(
-  n,
-  WithdrawDialog,
-);
-
-export default init
+export default setupWithdrawDialog
