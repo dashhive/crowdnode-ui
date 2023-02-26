@@ -229,12 +229,17 @@ export async function generateRecoveryPhrase(phraseOrWIF) {
 
   if (recoveryPhraseArr?.length >= 12) {
     recoveryPhrase = phraseOrWIF
+
+    // seed = await DashPhrase.decode(recoveryPhrase);
   }
   if (!phraseOrWIF) {
     recoveryPhrase = await DashPhrase.generate(targetBitEntropy);
   }
 
-  if (phraseOrWIF) {
+  if (
+    phraseOrWIF &&
+    recoveryPhraseArr?.length === 1
+  ) {
     privateKey = await wifToPrivateKey(phraseOrWIF)
     address = await DashKeys.wifToAddr(phraseOrWIF);
     // recoveryPhrase = await DashPhrase.encode(wifToPK);
