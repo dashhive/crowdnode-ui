@@ -1,91 +1,88 @@
-import {
-  CrowdNode,
-} from '../../imports.js'
-import { toDuff } from '../../utils.js'
-import {
-  hasOrRequestFunds,
-} from '../../lib/ui.js'
+import { isDecryptedPhraseOrWif } from '../../utils.js'
 
-/** @type {document} */
-const $d = document;
+import setupStakeDialog from '../dialogs/stake.js'
+import setupEncryptDialog from '../dialogs/encrypt.js'
 
-const { depositMinimum, stakeMinimum } = CrowdNode
-
-export class StakeForm extends HTMLElement {
-  constructor() {
-    super();
-
-    let name = this.getAttribute('name')
-    let addr = this.getAttribute('address')
-    let btnTxt = this.getAttribute('btn') || 'Stake Funds' // to CrowdNode
-
-    const form = $d.createElement('form');
-
-    form.setAttribute('name', name)
-    form.innerHTML = `
-      <fieldset>
-        <button type="submit">${btnTxt}</button>
-      </fieldset>
-    `
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault()
-
-      const amount = event.target.amount?.value || 0
-
-      console.log(
-        'stake funds amount',
-        amount,
-        toDuff(amount),
-      )
-
-      if (addr) {
-        let depositAmount = toDuff(amount)
-        if (depositAmount < depositMinimum) {
-          depositAmount = depositMinimum
-        }
-
-        await hasOrRequestFunds(
-          addr,
-          depositAmount,
-          ''
-        )
-
-        $d.getElementById('pageLoader')?.remove()
-
-        $d.body.insertAdjacentHTML(
-          'afterbegin',
-          `<progress id="pageLoader" class="pending"></progress>`,
-        )
-
-        try {
-          let cnDeposit = await CrowdNode.deposit(
-            selectedPrivateKey.wif,
-            hotwallet,
-            toDuff(amount) || null
-          );
-
-          console.log(
-            'depositCrowdNodeForm deposit res',
-            cnDeposit
-          )
-
-          form.amount.value = null
-
-          // await displayBalances(addr)
-        } catch(err) {
-          console.warn('failed to deposit', err)
-        }
-
-        $d.getElementById('pageLoader').remove()
-      }
-    })
-
-    const shadowRoot = this.attachShadow({mode: 'closed'});
-    shadowRoot.appendChild(form);
-  }
+const initialState = {
+  id: 'Button',
+  name: 'stake',
+  submitTxt: 'Stake',
+  submitAlt: 'Stake in CrowdNode',
+  cancelTxt: 'Cancel',
+  cancelAlt: 'Cancel Stake',
 }
 
-export const init = (n = 'stake-form') => customElements.define(n, StakeForm);
+export function setupStakeButton(el, state = {}) {
+  state = {
+    ...initialState,
+    ...state,
+  }
 
-export default init
+  console.log('setupStakeButton state', state)
+
+  const form = document.createElement('form')
+
+  form.classList.add('btn')
+
+  form.name = `${state.name}Form`
+
+  form.innerHTML = `
+    <fieldset>
+      <button type="submit">${state.submitTxt}</button>
+    </fieldset>
+  `
+
+  let handleStakeModal = async event => {
+    let returnValue = event?.target?.returnValue
+
+    // console.log(
+    //   `${state.name} button handleStakeModal`,
+    //   returnValue,
+    //   state.passphrase?.length
+    // )
+
+    if (returnValue && returnValue !== 'cancel') {
+      state.passphrase = returnValue
+    }
+
+    if (
+      state.passphrase ||
+      isDecryptedPhraseOrWif(state.phraseOrWif)
+    ) {
+      let stakeDialog = setupStakeDialog(
+        document.querySelector("main"),
+        {
+          address: state.address,
+          passphrase: state.passphrase
+        }
+      )
+
+      stakeDialog.showModal()
+    }
+  }
+  let handleSubmit = async event => {
+    event.preventDefault()
+    console.log(`${state.name} button handleSubmit`, event)
+
+    if(
+      !state.passphrase &&
+      !isDecryptedPhraseOrWif(state.phraseOrWif)
+    ) {
+      let encryptDialog = await setupEncryptDialog(document.querySelector("main"))
+
+      encryptDialog.addEventListener('close', handleStakeModal)
+
+      encryptDialog.showModal()
+    } else {
+      await handleStakeModal()
+    }
+  }
+
+  form.addEventListener('submit', handleSubmit)
+
+  el.insertAdjacentElement('afterbegin', form)
+
+  return form
+}
+
+export default setupStakeButton

@@ -1,22 +1,29 @@
 import {
-  DashSocket,
-  DashSight,
-  DashApi,
+  // DashSocket,
+  // DashSight,
+  // DashApi,
   CrowdNode,
 } from '../../imports.js'
-import { toDuff, addrToPubKeyHash } from '../../utils.js'
-import { getPrivateKey } from '../../lib/storage.js'
 import {
+  trigger,
+  // toDuff,
+} from '../../utils.js'
+import {
+  getAddrRows,
   hasOrRequestFunds,
 } from '../../lib/ui.js'
+import {
+  getStoredKeys,
+  getPrivateKey,
+} from '../../lib/storage.js'
 
 // @ts-ignore
-let dashsight = DashSight.create({
-  baseUrl: 'https://dashsight.dashincubator.dev',
-});
-let dashApi = DashApi.create({ insightApi: dashsight });
+// let dashsight = DashSight.create({
+//   baseUrl: 'https://dashsight.dashincubator.dev',
+// });
 
 const { hotwallet } = CrowdNode.main;
+// const { depositMinimum, stakeMinimum } = CrowdNode
 const { signupForApi, acceptTerms, offset } = CrowdNode.requests;
 let feeEstimate = 500;
 let signupOnly = signupForApi + offset;
@@ -33,309 +40,193 @@ const initialState = {
   cancelAlt: 'Cancel CrowdNode Signup',
 }
 
-export class SignupDialog extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      'name',
-      'address',
-      'btn'
-    ];
+export function setupSignupDialog(el, state = {}) {
+  state = {
+    ...initialState,
+    ...state,
   }
 
-  constructor() {
-    super();
+  console.log('signup dialog state', state)
 
-    this.name = this.getAttribute('name') || 'signup'
-    this.btn = this.getAttribute('btn') || 'Signup for CrowdNode'
-    this.address = this.getAttribute('address') || ''
-    this.state = {
-      ...initialState,
-      name: this.name,
-      submitTxt: this.btn,
-    }
+  const dialog = document.createElement('dialog')
+  const form = document.createElement('form')
+  const progress = document.createElement('progress')
 
-    // console.warn('SignupDialog custom el',
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
+  progress.classList.add('pending')
 
-    const dialog = document.createElement('dialog')
-    const form = document.createElement('form')
-    const style = document.createElement('style')
-    const progress = document.createElement('progress')
+  dialog.innerHTML = `
+    <figure>
+    </figure>
+  `
 
-    progress.classList.add('pending')
+  dialog.id = `${state.name}${state.id}`
+  dialog.classList.add('responsive')
 
-    style.textContent = `
-      @import url(/index.css);
-    `
+  form.name = `${state.name}Form`
+  form.method = 'dialog'
 
-    this.dialog = dialog
-    this.form = form
-    // this.style = style // this makes things go boom. DO NOT USE
-    this.progress = progress
+  form.innerHTML = `
+    <fieldset>
+      <label>
+        <input name="acceptToS" type="checkbox" />
+        I accept the CrowdNode <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a>
+      </label>
+    </fieldset>
+    <fieldset class="inline">
+      <button type="reset" title="${state.cancelAlt}">
+        <span>${state.cancelTxt}</span>
+      </button>
+      <button name="signup" type="submit" title="${state.submitAlt}" disabled>
+        <span>${state.submitTxt}</span>
+      </button>
+    </fieldset>
+  `
 
-    this.render = this.render.bind(this);
-    this.loadContent = this.loadContent.bind(this);
-    this.showModal = this.showModal.bind(this);
-    this.close = this.close.bind(this.dialog);
-    this.listeners = {}
+  let handleSetPass = event => {
+    event.preventDefault()
+    console.log('signup dialog handleSetPass', event.detail)
+    state.passphrase = event.detail;
+  }
 
-    dialog.innerHTML = `
-      <figure>
-        <form method="dialog">
-          <button value="cancel" alt="${this.state.cancelAlt}">
-            <span>${this.state.cancelTxt}</span>
-          </button>
-        </form>
-      </figure>
-    `
+  let handleClose = async event => {
+    event.preventDefault()
+    console.log(`${state.name} modal handleClose`, event)
 
-    this.loadContent()
+    window.removeEventListener('set:pass', handleSetPass)
+    dialog?.removeEventListener('close', handleClose)
+    form?.acceptToS?.removeEventListener('change', handleChange)
+    // @ts-ignore
+    event?.target?.remove()
 
-    dialog.id = this.getAttribute('id') || `${this.name}Modal`
-    dialog.classList.add('responsive')
+    let storedKeys = await getStoredKeys(state.passphrase)
 
-    // this.handleChange = () => {}
-    // this.handleSubmit = () => {}
-    this.handleClose = event => {
-      // @ts-ignore
-      // event?.target?.remove()
-      // @ts-ignore
-      shadowRoot.host?.remove()
-
-      if (this.listeners['close']?.length > 0) {
-        for (let callback of this.listeners['close']) {
-          callback(this.dialog)
-        }
+    await getAddrRows(
+      document.querySelector('#addressList tbody'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
       }
-    }
-    this.handleSetPass = ({ detail }) => {
-      console.log('signup dialog handleSetPass', detail)
-      this._pass = detail;
+    )
 
-      // if (this.listeners['set:pass']?.length > 0) {
-      //   for (let callback of this.listeners['set:pass']) {
-      //     callback(this.dialog)
-      //   }
-      // }
-    }
-
-    window.removeEventListener('set:pass', this.handleSetPass)
-    window.addEventListener('set:pass', this.handleSetPass, { once: true })
-    dialog.addEventListener('close', this.handleClose)
-
-    const shadowRoot = this.attachShadow({mode: 'closed'});
-    shadowRoot.appendChild(style);
-    shadowRoot.appendChild(dialog);
+    console.log('storedKeys', storedKeys)
   }
 
-  set pass(value) {
-    this._pass = value;
-  }
-  get pass() {
-    return this._pass;
-  }
-
-  on(event, callback) {
-    this.listeners[event] = this.listeners[event] || []
-    this.listeners[event].push(callback)
+  let handleReset = event => {
+    event.preventDefault()
+    console.log(`${state.name} button handleReset`, event)
+    form?.removeEventListener('close', handleReset)
+    dialog.close('cancel')
   }
 
-  close(e) {
-    // console.log('SignupDialog close', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
-    this.removeEventListener('close', this.handleClose)
-    this.close(e)
+  let handleChange = async event => {
+    console.log(
+      'signup handleChange',
+      {
+        event,
+        eventTarget: event.target,
+        acceptToS: form.acceptToS.checked,
+        address: state.address
+      }
+    )
+
+    form.signup.disabled = !form.acceptToS.checked
   }
 
-  showModal(e) {
-    this.dialog?.showModal()
-  }
+  let handleSubmit = async event => {
+    event.preventDefault()
 
-  render() {
-    this.form.innerHTML = `
-      <fieldset>
-        <label>
-          <input name="acceptToS" type="checkbox" />
-          I accept the CrowdNode <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a>
-        </label>
-        <button name="signup" type="submit" disabled>${this.btn}</button>
-      </fieldset>
-    `
-  }
+    const acceptToS = event.target.acceptToS?.checked
 
-  loadContent() {
-    // console.log('SignupDialog loadContent', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
+    console.log(
+      'signup for crowdnode',
+      {
+        acceptToS,
+        address: state.address
+      }
+    )
 
-    this.form.setAttribute('name', `${this.name}Form`)
+    let cnSignup
+    let cnAccept
 
-    this.render()
-
-    this.handleChange = async event => {
+    if (state.address && state.passphrase) {
       console.log(
-        'signup handleChange',
-        {
-          event,
-          eventTarget: event.target,
-          acceptToS: this.form.acceptToS.checked,
-          address: this.address
-        }
+        'signup privKey',
+        state.address,
+        state.passphrase,
       )
-
-      this.form.signup.disabled = !this.form.acceptToS.checked
-    }
-
-    this.handleSubmit = async event => {
-      event.preventDefault()
-
-      const acceptToS = event.target.acceptToS?.checked
+      let fromWif = await getPrivateKey(
+        state.address, state.passphrase
+      ) // , pass
 
       console.log(
-        'signup for crowdnode',
-        {
-          acceptToS,
-          address: this.address
-        }
+        'privKey',
+        state.address,
+        state.passphrase.length,
+        fromWif.length
       )
 
-      if (this.address) {
-        // FIX: add encryption passphrase
-        let fromWif = await getPrivateKey(this.address, this._pass) // , pass
+      let funds = await hasOrRequestFunds(
+        state.address,
+        signupTotal,
+        'to signup for CrowdNode'
+      )
 
-        this.form.querySelector('fieldset').disabled = true
-        this.dialog.querySelector('figure')
-          .insertAdjacentElement('afterbegin', this.progress)
+      dialog.querySelector('figure')
+        .insertAdjacentElement('afterbegin', progress)
+      form.querySelector('fieldset:last-child').disabled = true
 
-        document.body.insertAdjacentHTML(
-          'afterbegin',
-          `<progress id="pageLoader" class="pending"></progress>`,
-        )
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        `<progress id="pageLoader" class="pending"></progress>`,
+      )
 
-        // wait for signup
-        // wait for accept TOS
+      let cnStatus = await CrowdNode.status(state.address, hotwallet);
 
-        console.log('privKey', this.address, this._pass, fromWif)
-
-        await hasOrRequestFunds(
-          this.address,
-          signupTotal,
-          'to signup for CrowdNode'
-        )
-
-        let cnStatus = await CrowdNode.status(this.address, hotwallet);
-        let cnSignup
-        let cnAccept
-
-        if (
-          !cnStatus ||
-          cnStatus?.signup === 0
-        ) {
-          cnSignup = await CrowdNode.signup(fromWif, hotwallet);
-          console.log('signup for CrowdNode', cnSignup)
-        }
-        if (
-          cnStatus?.signup > 0 && cnStatus?.accept === 0
-        ) {
-          this.btn = this.getAttribute('btn') || 'Accept CrowdNode Terms of Service'
-
-          this.render()
-
-          cnAccept = await CrowdNode.accept(fromWif, hotwallet);
-          console.log('accept terms of service for CrowdNode', cnAccept)
-        }
-
-        document.getElementById('pageLoader').remove()
-
-        // document.signupCrowdNodeForm.querySelector('fieldset').disabled = true
-
-        // document.acceptCrowdNodeForm.querySelector('fieldset').disabled = true
-
-        if (cnSignup && cnAccept) {
-          document.body.querySelector('> progress')?.remove()
-          this.dialog.querySelector('progress')?.remove()
-        }
+      if (
+        !cnStatus ||
+        cnStatus?.signup === 0
+      ) {
+        cnSignup = await CrowdNode.signup(fromWif, hotwallet);
+        console.log('signup for CrowdNode', cnSignup)
       }
 
-      this.close()
+      if (
+        cnStatus?.signup > 0 && cnStatus?.accept === 0
+      ) {
+        state.submitTxt = 'Accept CrowdNode Terms of Service'
+
+        // RE-RENDER FORM
+
+        cnAccept = await CrowdNode.accept(fromWif, hotwallet);
+        console.log('accept terms of service for CrowdNode', cnAccept)
+      }
     }
 
-    window.removeEventListener('set:pass', this.handleSetPass)
-    window.addEventListener('set:pass', this.handleSetPass, { once: true })
-    this.dialog.addEventListener('close', this.handleClose)
-    if (this.handleSubmit) {
-      this.form.addEventListener('submit', this.handleSubmit)
-    }
-    this.form.acceptToS.addEventListener('change', this.handleChange)
-
-    this.dialog.querySelector('figure')
-      .insertAdjacentElement('afterbegin', this.form)
-  }
-
-  connectedCallback(e) {
-    console.log('SignupDialog added to page.', e);
-    // updateStyle(this);
-  }
-
-  disconnectedCallback(e) {
-    console.log('SignupDialog removed from page.', e);
-
-    window.removeEventListener('set:pass', this.handleSetPass)
-    this.dialog.removeEventListener('close', this.handleClose)
-    this.form.removeEventListener('submit', this.handleSubmit)
-    this.form.acceptToS.removeEventListener('change', this.handleChange)
-  }
-
-  adoptedCallback(e) {
-    console.log('SignupDialog moved to new page.', e);
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    console.log('SignupDialog attributes changed.', {name, oldValue, newValue});
-
-    if (name === 'name') {
-      this.name = newValue
-    } else {
-      this[name] = newValue || ''
+    if (cnSignup && cnAccept) {
+      document.getElementById('pageLoader')?.remove()
+      dialog.querySelector('progress')?.remove()
     }
 
-    window.removeEventListener('set:pass', this.handleSetPass)
-    this.dialog.removeEventListener('close', this.handleClose)
-    this.form.removeEventListener('submit', this.handleSubmit)
-    this.form.acceptToS.removeEventListener('change', this.handleChange)
-
-    this.loadContent()
+    dialog.close(cnSignup || 'cancel')
   }
+
+  dialog.addEventListener('close', handleClose)
+
+  form.addEventListener('reset', handleReset)
+  form.addEventListener('submit', handleSubmit)
+  form.acceptToS?.addEventListener('change', handleChange)
+
+  window.addEventListener('set:pass', handleSetPass) //,  { once: true }
+
+  dialog.querySelector('figure')
+    .insertAdjacentElement('afterbegin', form)
+
+  el.insertAdjacentElement('afterend', dialog)
+
+  // dialog.showModal()
+
+  return dialog
 }
 
-export const init = (
-  name = 'signup-dialog',
-  con = SignupDialog
-) => customElements.define(
-  name,
-  con,
-);
-
-// export const init = (state) => {
-//   let defaultState = {
-//     n: 'signup-dialog',
-//     el: (state) => {
-//       globalState = state
-//       return SignupDialog
-//     }
-//   }
-
-//   globalState = {
-//     ...defaultState,
-//     ...state,
-//   }
-
-//   return customElements.define(
-//     globalState.n,
-//     globalState.el(globalState),
-//   );
-// }
-
-export default init
+export default setupSignupDialog

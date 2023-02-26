@@ -1,28 +1,20 @@
 import {
-  // DashSocket,
-  // DashSight,
-  // DashApi,
+  trigger,
+  // toDuff,
+} from '../../utils.js'
+import {
+  getAddrRows,
+  // hasOrRequestFunds,
+} from '../../lib/ui.js'
+import {
+  getStoredKeys,
+  getPrivateKey,
+} from '../../lib/storage.js'
+import {
   CrowdNode,
 } from '../../imports.js'
-// import { toDuff, addrToPubKeyHash } from '../../utils.js'
-import { getPrivateKey } from '../../lib/storage.js'
-// import {
-//   hasOrRequestFunds,
-// } from '../../lib/ui.js'
-
-// @ts-ignore
-// let dashsight = DashSight.create({
-//   baseUrl: 'https://dashsight.dashincubator.dev',
-// });
-// let dashApi = DashApi.create({ insightApi: dashsight });
 
 const { hotwallet } = CrowdNode.main;
-const { signupForApi, acceptTerms, offset } = CrowdNode.requests;
-let feeEstimate = 500;
-// let signupOnly = signupForApi + offset;
-// let acceptOnly = acceptTerms + offset;
-// let signupFees = signupOnly + acceptOnly;
-// let signupTotal = signupFees + (2 * feeEstimate);
 
 const initialState = {
   id: 'Modal',
@@ -30,399 +22,225 @@ const initialState = {
   submitTxt: 'Unstake',
   submitAlt: 'Unstake from CrowdNode',
   cancelTxt: 'Cancel',
-  cancelAlt: 'Cancel CrowdNode Unstaking',
+  cancelAlt: 'Cancel Unstake',
 }
 
-export class UnstakeDialog extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      'name',
-      'address',
-      'btn'
-    ];
+export function setupUnstakeDialog(el, state = {}) {
+  state = {
+    ...initialState,
+    ...state,
   }
 
-  constructor() {
-    super();
+  console.log('unstake dialog state', state)
 
-    this.name = this.getAttribute('name') || 'unstake'
-    this.btn = this.getAttribute('btn') || 'Unstake'
-    this.address = this.getAttribute('address') || ''
-    this.state = {
-      ...initialState,
-      name: this.name,
-      submitTxt: this.btn,
-    }
+  const dialog = document.createElement('dialog')
+  const form = document.createElement('form')
+  const progress = document.createElement('progress')
 
-    console.warn('UnstakeDialog contructor init',
-      this.name, this.btn, this.address
-    )
+  progress.classList.add('pending')
+  form.classList.add('modal')
 
-    // const dialog = document.createElement('dialog')
-    const unstakeForm = document.createElement('form')
-    const style = document.createElement('style')
-    const progress = document.createElement('progress')
+  dialog.innerHTML = `
+    <figure>
+    </figure>
+  `
 
-    progress.classList.add('pending')
+  dialog.id = `${state.name}${state.id}`
+  dialog.classList.add('responsive')
 
-    style.textContent = `
-      @import url(/index.css);
-      form {
-        padding: 1rem;
-      }
-      form fieldset.inline {
-        margin-bottom: 1rem;
-      }
-      form fieldset.inline input[name="percent"] {
-        min-width: 1rem;
-        max-width: 6rem;
-        border-right: 1px solid var(--inpbd);
-      }
-      fieldset {
-        border: 0;
-        margin: 0;
-        padding: 1rem;
-      }
-      form fieldset {
-        min-width: 1rem;
-      }
-    `
+  form.name = `${state.name}Form`
+  form.method = 'dialog'
 
-    const shadowRoot = this.attachShadow({mode: 'open'});
-    shadowRoot.appendChild(style);
+  form.innerHTML = `
+    <fieldset class="inline">
+      <input
+        name="percentRange"
+        type="range"
+        min="0.1"
+        max="100.0"
+        step="0.1"
+        value="1"
+      />
+      <label class="percent"><input
+        type="number"
+        name="percent"
+        step="0.1"
+        value="1"
+        placeholder="Unstake Percentage (0.1)"
+      /></label>
+    </fieldset>
+    <fieldset class="inline">
+      <button type="reset" title="${state.cancelAlt}">
+        <span>${state.cancelTxt}</span>
+      </button>
+      <button type="submit" title="${state.submitAlt}">
+        <span>${state.submitTxt}</span>
+      </button>
+    </fieldset>
+  `
 
-    this.unstakeForm = unstakeForm
-    // this.style = style // this makes things go boom. DO NOT USE
-    this.progress = progress
-
-    this.removeListeners = this.removeListeners.bind(this);
-    this.addListeners = this.addListeners.bind(this);
-    this.loadContent = this.loadContent.bind(this);
-    this.showModal = this.showModal.bind(this);
-    this.close = this.close.bind(this);
-    this.listeners = {}
-
-    // this.handleChange = () => {}
-    // this.handleSubmit = () => {}
-    this.handleClose = event => {
-      this.removeListeners()
-
-      this.dialog?.removeEventListener('close', this.handleClose)
-      // @ts-ignore
-      // event?.target?.remove()
-      // @ts-ignore
-      shadowRoot.host?.remove()
-
-      if (this.listeners['close']?.length > 0) {
-        for (let callback of this.listeners['close']) {
-          callback(event)
-        }
-      }
-    }
-    this.handleSetPass = event => {
-      event.preventDefault()
-      console.log('unstake dialog handleSetPass', event.detail)
-      this._pass = event.detail;
-
-      // if (this.listeners['set:pass']?.length > 0) {
-      //   for (let callback of this.listeners['set:pass']) {
-      //     callback(this.dialog)
-      //   }
-      // }
-    }
+  let handleSetPass = event => {
+    event.preventDefault()
+    console.log('unstake dialog handleSetPass', event.detail)
+    state.passphrase = event.detail;
   }
 
-  set pass(value) {
-    this._pass = value;
-  }
-  get pass() {
-    return this._pass;
-  }
+  let handleClose = async event => {
+    event.preventDefault()
+    console.log(`${state.name} modal handleClose`, event)
 
-  on(event, callback) {
-    this.listeners[event] = this.listeners[event] || []
-    this.listeners[event].push(callback)
-  }
-
-  close(e) {
-    // console.log('UnstakeDialog close', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
-    this.dialog?.close()
-  }
-
-  showModal(e) {
-    this.dialog?.showModal()
-  }
-
-  addRemoveListener(el, eventName, callback, options) {
-    el?.removeEventListener(eventName, callback, options)
-    el?.addEventListener(eventName, callback, options)
-  }
-
-  addListeners() {
-    this.addRemoveListener(this.dialog, 'close', this.handleClose)
-    // this.dialog?.addEventListener('close', this.handleClose, { once: true })
-    if (this.handleSubmit) {
-      this.addRemoveListener(this.unstakeForm, 'submit', this.handleSubmit)
-    }
-
-    // this.unstakeForm?.percentRange?.addEventListener(
-    //   "input",
-    //   this.handlePercentRangeInput
-    // )
-    // this.unstakeForm?.percent?.addEventListener(
-    //   "input",
-    //   this.handlePercentInput
-    // )
-    this.addRemoveListener(
-      this.unstakeForm?.percentRange, 'input',
-      this.handlePercentRangeInput, { once: true }
-    )
-    this.addRemoveListener(
-      this.unstakeForm?.percent, 'input',
-      this.handlePercentInput, { once: true }
-    )
-
-    // window.removeEventListener('set:pass', this.handleSetPass)
-    // window.addEventListener('set:pass', this.handleSetPass, { once: true })
-    this.addRemoveListener(
-      window, 'set:pass', this.handleSetPass, { once: true }
-    )
-  }
-
-  removeListeners() {
-    this.dialog?.removeEventListener('close', this.handleClose)
-    this.unstakeForm?.removeEventListener('submit', this.handleSubmit)
-
-    this.unstakeForm?.percentRange?.removeEventListener(
+    window.removeEventListener('set:pass', handleSetPass)
+    dialog?.removeEventListener('close', handleClose)
+    form?.removeEventListener('submit', handleSubmit)
+    form?.percentRange?.removeEventListener(
       "input",
-      this.handlePercentRangeInput
+      handlePercentRangeInput
     )
-    this.unstakeForm?.percent?.removeEventListener(
+    form?.percent?.removeEventListener(
       "input",
-      this.handlePercentInput
+      handlePercentInput
     )
 
-    window.removeEventListener('set:pass', this.handleSetPass)
+    // @ts-ignore
+    event?.target?.remove()
+
+    let storedKeys = await getStoredKeys(state.passphrase)
+    await getAddrRows(
+      document.querySelector('#addressList tbody'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
+      }
+    )
+
+    console.log('storedKeys', storedKeys)
   }
 
-  loadContent() {
-    this.dialog = this.dialog || document.createElement('dialog')
-    this.dialog.innerHTML = `
-      <figure>
-        <form method="dialog">
-          <button value="cancel" alt="${this.state.cancelAlt}">
-            <span>${this.state.cancelTxt}</span>
-          </button>
-        </form>
-      </figure>
-    `
+  let handleReset = event => {
+    event.preventDefault()
+    console.log(`${state.name} button handleReset`, event)
+    form?.removeEventListener('reset', handleReset)
+    dialog.close('cancel')
+  }
 
-    this.dialog.id = this.getAttribute('id') || `${this.name}Modal`
-    this.dialog.classList.add('responsive')
+  let percentRangeChanging = false
+  let percentChanging = false
 
-    this.dialog.querySelector('figure')
-      .insertAdjacentElement('afterbegin', this.unstakeForm)
-    // console.log('UnstakeDialog loadContent', this,
-    //   this.addr, this.funds, this.needed, this.msg
-    // )
-    this.shadowRoot.appendChild(this.dialog);
+  let handlePercentRangeInput = async event => {
+    percentRangeChanging = true
+    if (!percentChanging) {
+      form.percent.value = event.target.value
+    }
+    percentRangeChanging = false
+  }
 
-    this.unstakeForm.setAttribute('name', `${this.name}Form`)
+  let handlePercentInput = async event => {
+    percentChanging = true
+    if (!percentRangeChanging) {
+      form.percentRange.value = event.target.value
+    }
+    percentChanging = false
+  }
 
-    this.unstakeForm.innerHTML = `
-      <fieldset class="inline">
-        <input
-          name="percentRange"
-          type="range"
-          min="0.1"
-          max="100.0"
-          step="0.1"
-          value="1"
-        />
-        <input
-          type="number"
-          name="percent"
-          step="0.1"
-          value="1"
-          placeholder="Unstake Percentage (0.1)"
-        />
-      </fieldset>
-      <fieldset>
-        <button name="unstake" type="submit">${this.btn}</button>
-      </fieldset>
-    `
+  let handleSubmit = async event => {
+    event.preventDefault()
 
-    this.percentRangeChanging = false
-    this.percentChanging = false
+    const percent = event.target.percent?.value
+    const percentRange = event.target.percentRange?.value
 
-    this.handlePercentRangeInput = async event => {
-      this.percentRangeChanging = true
-      if (!this.percentChanging) {
-        this.unstakeForm.percent.value = event.target.value
+    console.log(
+      'unstake from crowdnode',
+      {
+        address: state.address,
+        percent,
+        percentRange
       }
-      this.percentRangeChanging = false
-    }
+    )
 
-    this.handlePercentInput = async event => {
-      this.percentChanging = true
-      if (!this.percentRangeChanging) {
-        this.unstakeForm.percentRange.value = event.target.value
+    let cnUnstake
+
+    if (state.address) {
+      let fromWif = await getPrivateKey(state.address, state.passphrase) // , pass
+
+      let permil = Math.round(percent * 10);
+      if (permil <= 0 || permil > 1000) {
+        console.error("Error: withdraw percent must be between 0.1 and 100.0");
       }
-      this.percentChanging = false
-    }
 
-    this.handleChange = async event => {
-      console.log(
-        'unstake handleChange',
-        {
-          event,
-          eventTarget: event.target,
-          address: this.address
-        }
-      )
-
-      this.unstakeForm.unstake.disabled = !this.unstakeForm.acceptToS.checked
-    }
-
-    this.handleSubmit = async event => {
-      event.preventDefault()
-
-      const percent = event.target.percent?.value
-      const percentRange = event.target.percentRange?.value
+      let realPercentStr = (permil / 10).toFixed(1);
+      console.info(`Initiating withdraw of ${realPercentStr}%...`);
 
       console.log(
-        'unstake from crowdnode',
-        {
-          address: this.address,
-          percent,
-          percentRange
-        }
+        'privKey',
+        state.address,
+        state.passphrase.length,
+        fromWif.length
       )
 
-      let cnUnstake
+      dialog.querySelector('figure')
+        .insertAdjacentElement('afterbegin', progress)
 
-      if (this.address) {
-        // FIX: add encryption passphrase
-        let fromWif = await getPrivateKey(this.address, this._pass) // , pass
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        `<progress id="pageLoader" class="pending"></progress>`,
+      )
 
-        // let depositAmount = toDuff(amount)
-        // if (depositAmount < depositMinimum) {
-        //   depositAmount = depositMinimum
-        // }
+      try {
+        form.querySelector('fieldset:last-child').disabled = true
+        cnUnstake = await CrowdNode.withdraw(
+          fromWif,
+          hotwallet,
+          permil
+        );
 
-        // let percent = parseFloat(percentStr);
-
-        let permil = Math.round(percent * 10);
-        if (permil <= 0 || permil > 1000) {
-          console.error("Error: withdraw percent must be between 0.1 and 100.0");
-        }
-
-        let realPercentStr = (permil / 10).toFixed(1);
-        console.info(`Initiating withdraw of ${realPercentStr}%...`);
-
-        // wait for unstake
-        // wait for accept TOS
-
-        console.log('privKey', this.address, this._pass, fromWif)
-
-        // await hasOrRequestFunds(
-        //   this.address,
-        //   depositAmount,
-        //   'to unstake from CrowdNode'
-        // )
-
-        this.unstakeForm.querySelector('fieldset').disabled = true
-        this.dialog.querySelector('figure')
-          .insertAdjacentElement('afterbegin', this.progress)
-
-        document.body.insertAdjacentHTML(
-          'afterbegin',
-          `<progress id="pageLoader" class="pending"></progress>`,
+        console.log(
+          'crowdnode unstake res',
+          cnUnstake
         )
+        console.info(`API Response: ${cnUnstake.api}`);
 
-        try {
-          cnUnstake = await CrowdNode.withdraw(
-            fromWif,
-            hotwallet,
-            permil
-          );
+        // event.target.percent.value = null
 
-          console.log(
-            'crowdnode unstake res',
-            cnUnstake
-          )
-          console.info(`API Response: ${cnUnstake.api}`);
-
-          // document.depositCrowdNodeForm.amount.value = null
-
-          // await displayBalances(addr)
-        } catch(err) {
-          console.warn('failed to deposit', err)
-        }
-
-        // ADD UNSTAKE HERE
-
-        // let cnSignup = await CrowdNode.signup(fromWif, hotwallet);
-        // console.log('signupCrowdNodeForm', cnSignup)
-        // let cnAccept = await CrowdNode.accept(fromWif, hotwallet);
-        // console.log('acceptCrowdNodeForm', cnAccept)
+        // await displayBalances(addr)
+      } catch(err) {
+        console.warn('failed to unstake from crowdnode', err)
       }
-
-      if (cnUnstake) {
-        document.getElementById('pageLoader').remove()
-        this.dialog.querySelector('progress')?.remove()
-      }
-
-      this.close(cnUnstake)
+      form.querySelector('fieldset:last-child').disabled = false
     }
 
-    // document.addEventListener('set:pass', this.handleSetPass)
-  }
-
-  connectedCallback(e) {
-    console.log('UnstakeDialog added to page.', e, this.pass);
-    // updateStyle(this);
-    // this.removeListeners()
-    // this.addListeners()
-  }
-
-  disconnectedCallback(e) {
-    console.log('UnstakeDialog removed from page.', e);
-
-    this.removeListeners()
-  }
-
-  adoptedCallback(e) {
-    console.log('UnstakeDialog moved to new page.', e);
-    this.removeListeners()
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    console.log('UnstakeDialog attributes changed.', {name, oldValue, newValue});
-
-    if (name === 'name') {
-      this.name = newValue
-    } else {
-      this[name] = newValue || ''
+    if (cnUnstake) {
+      document.getElementById('pageLoader').remove()
+      dialog.querySelector('progress')?.remove()
     }
 
-    // this.removeListeners()
-
-    this.loadContent()
-
-    this.removeListeners()
-    this.addListeners()
+    dialog.close(cnUnstake)
   }
+
+  dialog.addEventListener('close', handleClose)
+
+  form.addEventListener('reset', handleReset)
+  form.addEventListener('submit', handleSubmit)
+
+  form?.percentRange?.addEventListener(
+    "input",
+    handlePercentRangeInput
+  )
+  form?.percent?.addEventListener(
+    "input",
+    handlePercentInput
+  )
+
+  window.addEventListener('set:pass', handleSetPass) //,  { once: true }
+
+  dialog.querySelector('figure')
+    .insertAdjacentElement('afterbegin', form)
+
+  el.insertAdjacentElement('afterend', dialog)
+
+  // dialog.showModal()
+
+  return dialog
 }
 
-export const init = (
-  name = 'unstake-dialog',
-  con = UnstakeDialog
-) => customElements.define(
-  name,
-  con,
-);
-
-export default init
+export default setupUnstakeDialog

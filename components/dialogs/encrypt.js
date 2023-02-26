@@ -39,7 +39,7 @@ const initialState = {
   cancelAlt: 'Cancel Encrypt/Decrypt',
 }
 
-export function setupEncryptDialog(el, state = {}) {
+export async function setupEncryptDialog(el, state = {}) {
   state = {
     ...initialState,
     ...state,
@@ -66,7 +66,8 @@ export function setupEncryptDialog(el, state = {}) {
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
 
-  form.setAttribute('name', `${state.name}Form`)
+  form.name = `${state.name}Form`
+  form.method = 'dialog'
 
   form.innerHTML = `
     <fieldset>
@@ -75,10 +76,10 @@ export function setupEncryptDialog(el, state = {}) {
       <div class="error"></div>
     </fieldset>
     <fieldset class="inline">
-      <button type="reset" alt="${state.cancelAlt}">
+      <button type="reset" title="${state.cancelAlt}">
         <span>${state.cancelTxt}</span>
       </button>
-      <button type="submit" alt="${state.submitAlt}">
+      <button type="submit" title="${state.submitAlt}">
         <span>${state.submitTxt}</span>
       </button>
     </fieldset>
@@ -126,15 +127,16 @@ export function setupEncryptDialog(el, state = {}) {
       const decryptedStoredKeys = await getStoredKeys(passphrase)
 
       let addrRows = await getAddrRows(
+        $d.querySelector('#addressList tbody'),
         decryptedStoredKeys,
         {
-          status: () => trigger("set:pass", passphrase)
+          status: () => trigger("set:pass", passphrase),
+          passphrase
         }
       )
 
       // console.info('WALLET ROWS', storedKeys, addrRows)
 
-      $d.querySelector('#addressList tbody').innerHTML = addrRows
       trigger("set:pass", passphrase);
 
       console.log('encrypt dialog form selectedPrivateKey', {
@@ -149,7 +151,7 @@ export function setupEncryptDialog(el, state = {}) {
 
       form?.removeEventListener('submit', handleSubmit)
 
-      dialog.close('decrypted')
+      dialog.close(passphrase)
     }
   }
 
