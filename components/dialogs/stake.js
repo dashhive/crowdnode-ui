@@ -87,7 +87,7 @@ export function setupStakeDialog(el, state = {}) {
     let storedKeys = await getStoredKeys(state.passphrase)
 
     await getAddrRows(
-      document.querySelector('#addressGrid section'),
+      document.querySelector('#addressGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", state.passphrase),

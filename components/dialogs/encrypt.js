@@ -128,7 +128,7 @@ export async function setupEncryptDialog(el, state = {}) {
       const decryptedStoredKeys = await getStoredKeys(passphrase)
 
       let addrRows = await getAddrRows(
-        $d.querySelector('#addressGrid section'),
+        $d.querySelector('#addressGrid'),
         decryptedStoredKeys,
         {
           status: () => trigger("set:pass", passphrase),
