@@ -147,7 +147,7 @@ export function setupAddWalletDialog(el, state = {}) {
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
     let addrRows = await getAddrRows(
-      $d.querySelector('#addressList tbody'),
+      $d.querySelector('#addressGrid section'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)
@@ -175,7 +175,7 @@ export function setupAddWalletDialog(el, state = {}) {
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
     let addrRows = await getAddrRows(
-      $d.querySelector('#addressList tbody'),
+      $d.querySelector('#addressGrid section'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)

@@ -119,6 +119,7 @@ export async function setupEncryptDialog(el, state = {}) {
 
       // @ts-ignore
       event.target.passphrase.value = ''
+      // event.target.querySelector('button[type="submit"]').disabled = true
 
       await encryptKeys(storedKeys, passphrase)
 
@@ -127,7 +128,7 @@ export async function setupEncryptDialog(el, state = {}) {
       const decryptedStoredKeys = await getStoredKeys(passphrase)
 
       let addrRows = await getAddrRows(
-        $d.querySelector('#addressList tbody'),
+        $d.querySelector('#addressGrid section'),
         decryptedStoredKeys,
         {
           status: () => trigger("set:pass", passphrase),
@@ -147,7 +148,8 @@ export async function setupEncryptDialog(el, state = {}) {
         ul: storedKeys.length,
       })
 
-      $d.privKeyForm.querySelector('button').disabled = false
+      // event.target.querySelector('button[type="submit"]').disabled = false
+      // $d.privKeyForm.querySelector('button').disabled = false
 
       form?.removeEventListener('submit', handleSubmit)
 

@@ -40,7 +40,7 @@ export function setupQrDialog(el, state = {}) {
   //   this[name] = newValue || ''
   // }
 
-  console.log('qr dialog state', state)
+  // console.log('qr dialog state', state)
 
   const dialog = document.createElement('dialog')
   const form = document.createElement('form')
@@ -79,7 +79,7 @@ export function setupQrDialog(el, state = {}) {
       let storedKeys = await getStoredKeys(state.passphrase)
 
       await getAddrRows(
-        document.querySelector('#addressList tbody'),
+        document.querySelector('#addressGrid section'),
         storedKeys,
         {
           status: () => trigger("set:pass", state.passphrase),
