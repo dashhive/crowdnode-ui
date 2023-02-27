@@ -18,7 +18,7 @@ export function setupStakeButton(el, state = {}) {
     ...state,
   }
 
-  console.log('setupStakeButton state', state)
+  // console.log('setupStakeButton state', state)
 
   const form = document.createElement('form')
 

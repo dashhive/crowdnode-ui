@@ -19,7 +19,7 @@ export function setupWithdrawButton(el, state = {}) {
     ...state,
   }
 
-  console.log('setupWithdrawButton state', state)
+  // console.log('setupWithdrawButton state', state)
 
   const form = document.createElement('form')
 

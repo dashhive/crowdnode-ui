@@ -18,7 +18,7 @@ export function setupSignupButton(el, state = {}) {
     ...state,
   }
 
-  console.log('setupSignupButton state', state)
+  // console.log('setupSignupButton state', state)
 
   const form = document.createElement('form')
 

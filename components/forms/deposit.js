@@ -19,7 +19,7 @@ export function setupDepositButton(el, state = {}) {
     ...state,
   }
 
-  console.log('setupDepositButton state', state)
+  // console.log('setupDepositButton state', state)
 
   const form = document.createElement('form')
 
