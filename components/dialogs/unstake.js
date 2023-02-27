@@ -52,22 +52,31 @@ export function setupUnstakeDialog(el, state = {}) {
   form.method = 'dialog'
 
   form.innerHTML = `
-    <fieldset class="inline">
-      <input
-        name="percentRange"
-        type="range"
-        min="0.1"
-        max="100.0"
-        step="0.1"
-        value="1"
-      />
-      <label class="percent"><input
-        type="number"
-        name="percent"
-        step="0.1"
-        value="1"
-        placeholder="Unstake Percentage (0.1)"
-      /></label>
+    <fieldset class="nomarginbottom">
+      <h2>Unstake from CrowdNode</h2>
+
+      <label for="unstakePercent">
+        Percent
+      </label>
+      <fieldset class="inline nopad">
+        <input
+          name="percentRange"
+          type="range"
+          min="0.1"
+          max="100.0"
+          step="0.1"
+          value="1"
+        />
+        <label class="percent"><input
+          id="unstakePercent"
+          type="number"
+          name="percent"
+          step="0.1"
+          value="1"
+          placeholder="Unstake Percentage (0.1)"
+        /></label>
+      </fieldset>
+      <em>Enter the percentage you wish to unstake.</em>
     </fieldset>
     <fieldset class="inline">
       <button type="reset" title="${state.cancelAlt}">
@@ -174,7 +183,7 @@ export function setupUnstakeDialog(el, state = {}) {
       console.log(
         'privKey',
         state.address,
-        state.passphrase.length,
+        state.passphrase?.length,
         fromWif.length
       )
 
@@ -185,9 +194,11 @@ export function setupUnstakeDialog(el, state = {}) {
         'afterbegin',
         `<progress id="pageLoader" class="pending"></progress>`,
       )
+      form.querySelectorAll('fieldset')?.forEach(el => {
+        el.disabled = true
+      })
 
       try {
-        form.querySelector('fieldset:last-child').disabled = true
         cnUnstake = await CrowdNode.withdraw(
           fromWif,
           hotwallet,

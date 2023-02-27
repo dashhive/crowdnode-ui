@@ -801,6 +801,7 @@ dialog.responsive fieldset:last-child {
 dialog.responsive fieldset:last-child {
   padding: 0;
 }
+
 dialog.responsive button[type="submit"] {
   flex: 1 1 auto;
 }
@@ -1070,4 +1071,23 @@ section.page.active {
     row-gap: 0;
     column-gap: 1px;
   }
+}
+
+dialog.responsive fieldset.nomargin {
+  margin: 0;
+}
+dialog.responsive fieldset.nomargintop {
+  margin-top: 0;
+}
+dialog.responsive fieldset.nomarginbottom {
+  margin-bottom: 0;
+}
+dialog.responsive fieldset.nopad {
+  padding: 0;
+}
+dialog.responsive fieldset.nopadtop {
+  padding-top: 0;
+}
+dialog.responsive fieldset.nopadbottom {
+  padding-bottom: 0;
 }
