@@ -63,10 +63,7 @@ export function setupAddWalletDialog(el, state = {}) {
   //   @import url(/index.css);
   // `
 
-  dialog.innerHTML = `
-    <figure>
-    </figure>
-  `
+  dialog.innerHTML = ''
 
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
@@ -225,10 +222,8 @@ export function setupAddWalletDialog(el, state = {}) {
   genForm.addEventListener('reset', handleReset)
   genForm.addEventListener('submit', handleGenSubmit)
 
-  dialog.querySelector('figure')
-    .insertAdjacentElement('afterbegin', addForm)
-  dialog.querySelector('figure')
-    .insertAdjacentElement('beforeend', genForm)
+  dialog.insertAdjacentElement('afterbegin', addForm)
+  dialog.insertAdjacentElement('beforeend', genForm)
 
   // this.dialog.querySelector('figure')
   el.insertAdjacentElement('afterend', dialog)

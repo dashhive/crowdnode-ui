@@ -70,10 +70,7 @@ export async function setupEncryptDialog(el, state = {}) {
   //   @import url(/index.css);
   // `
 
-  dialog.innerHTML = `
-    <figure>
-    </figure>
-  `
+  dialog.innerHTML = ''
 
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
@@ -195,10 +192,8 @@ export async function setupEncryptDialog(el, state = {}) {
   form.addEventListener('reset', handleReset)
   form.addEventListener('submit', handleSubmit)
 
-  dialog.querySelector('figure')
-    .insertAdjacentElement('afterbegin', form)
+  dialog.insertAdjacentElement('afterbegin', form)
 
-  // this.dialog.querySelector('figure')
   el.insertAdjacentElement('afterend', dialog)
 
   // dialog.showModal()
