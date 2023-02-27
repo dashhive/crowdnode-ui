@@ -13,13 +13,23 @@
 	<meta name="msapplication-TileImage" content="assets/icons/dash-d-rounded-square-250.png">
 	<meta name="msapplication-config" content="assets/icons/browserconfig.xml">
 
-  <base href="/crowdnode-ui/" />
   <title>CrowdNode.js UI</title>
 
-	<link rel="icon" type="image/png" href="favicon.png?v=1">
-	<link rel="shortcut icon" href="favicon.png?v=1">
+  <script>
+    if (JSON.parse(localStorage.getItem('theme'))) {
+      document.documentElement.classList.add('it')
+    }
+    if (location.pathname.includes('crowdnode-ui')) {
+      document.head.insertAdjacentHTML('afterbegin', `<base href="/crowdnode-ui/" />`)
+    } else {
+      document.head.insertAdjacentHTML('afterbegin', `<base href="/" />`)
+    }
+  </script>
+
+	<link rel="icon" type="image/png" href="/favicon.png?v=1">
+	<link rel="shortcut icon" href="/favicon.png?v=1">
 	<!-- <link rel="shortcut icon" href="assets/icons/favicon.ico"> -->
-	<link rel="manifest" href="manifest.json?v=1">
+	<link rel="manifest" href="/manifest.json?v=1">
 	<link rel="icon" type="image/png" sizes="250x250" href="assets/icons/dash-d-rounded-square-250.png">
 	<link rel="apple-touch-icon" sizes="250x250" href="assets/icons/dash-d-rounded-square-250.png">
 	<!--
@@ -36,12 +46,6 @@
 	<link rel="apple-touch-icon" sizes="167x167" href="assets/icons/apple-touch-icon-167x167.png">
 	<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon-180x180.png">
 	<link rel="apple-touch-icon" sizes="1024x1024" href="assets/icons/apple-touch-icon-1024x1024.png"> -->
-
-  <script>
-  if (JSON.parse(localStorage.getItem('theme'))) {
-    document.documentElement.classList.add('it')
-  }
-  </script>
   <link rel="stylesheet" type="text/css" media="screen" href="index.css">
 </head>
 <body>
