@@ -157,7 +157,7 @@ export function setupWithdrawDialog(el, state = {}) {
       console.log(
         'privKey',
         state.address,
-        state.passphrase.length,
+        state.passphrase?.length,
         fromWif.length
       )
 

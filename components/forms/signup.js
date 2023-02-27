@@ -66,7 +66,8 @@ export function setupSignupButton(el, state = {}) {
         document.querySelector("main"),
         {
           address: state.address,
-          passphrase: state.passphrase
+          passphrase: state.passphrase,
+          phraseOrWif: state.phraseOrWif
         }
       )
 
