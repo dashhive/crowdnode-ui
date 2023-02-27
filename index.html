@@ -20,9 +20,9 @@
       document.documentElement.classList.add('it')
     }
     if (location.pathname.includes('crowdnode-ui')) {
-      document.head.insertAdjacentHTML('afterbegin', `<base href="/crowdnode-ui/" />`)
+      document.head.querySelector('title').insertAdjacentHTML('beforebegin', `<base href="/crowdnode-ui/" />`)
     } else {
-      document.head.insertAdjacentHTML('afterbegin', `<base href="/" />`)
+      document.head.querySelector('title').insertAdjacentHTML('beforebegin', `<base href="/" />`)
     }
   </script>
   <script type="text/javascript" src="/crowdnode-ui/ghspa.js"></script>
