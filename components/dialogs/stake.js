@@ -3,6 +3,7 @@ import {
 } from '../../utils.js'
 import {
   getAddrRows,
+  getStakeRows,
   hasOrRequestFunds,
 } from '../../lib/ui.js'
 import {
@@ -95,6 +96,14 @@ export function setupStakeDialog(el, state = {}) {
 
     await getAddrRows(
       document.querySelector('#addressGrid'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
+      }
+    )
+    await getStakeRows(
+      document.querySelector('#stakingGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", state.passphrase),

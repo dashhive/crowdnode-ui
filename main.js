@@ -3,6 +3,7 @@ import {
 } from './utils.js'
 import {
   getAddrRows,
+  getStakeRows,
   displayBalances,
 } from './lib/ui.js'
 import {
@@ -67,7 +68,17 @@ export default async function main() {
   _privateKeys = await getStoredKeys(passphrase)
 
   if (
-    [PAGE_ONBOARD, PAGE_DASH, PAGE_SETTINGS].includes(currentPage)
+    currentPage === PAGE_ONBOARD &&
+    document.body.clientWidth >= 650
+  ) {
+    return location.replace('/wallet')
+  }
+
+  if (
+    [
+      PAGE_DASH,
+      PAGE_SETTINGS
+    ].includes(currentPage)
   ) {
     return location.replace('/wallet')
   }
@@ -85,6 +96,19 @@ export default async function main() {
   if (currentPage === PAGE_WALLET && _privateKeys.length > 0) {
     await getAddrRows(
       $d.querySelector('#addressGrid'),
+      _privateKeys,
+      {
+        status: () => trigger("set:pass", passphrase),
+        passphrase
+      }
+    )
+
+    trigger('set:pass', passphrase);
+  }
+
+  if (currentPage === PAGE_STAKE && _privateKeys.length > 0) {
+    await getStakeRows(
+      $d.querySelector('#stakingGrid'),
       _privateKeys,
       {
         status: () => trigger("set:pass", passphrase),
@@ -115,21 +139,21 @@ export default async function main() {
       addWalletDialog.showModal()
     })
 
-  $d.balanceForm.addEventListener('submit', async event => {
-    event.preventDefault()
+  // $d.balanceForm.addEventListener('submit', async event => {
+  //   event.preventDefault()
 
-    if (selectedPrivateKey) {
-      const { addr } = selectedPrivateKey
+  //   if (selectedPrivateKey) {
+  //     const { addr } = selectedPrivateKey
 
-      const { balance } = await displayBalances(addr)
+  //     const { balance } = await displayBalances(addr)
 
-      if (!balance?.TotalBalance) {
-        console.warn(
-          balance.value
-        );
-      }
-    }
-  })
+  //     if (!balance?.TotalBalance) {
+  //       console.warn(
+  //         balance.value
+  //       );
+  //     }
+  //   }
+  // })
 }
 
 main()
