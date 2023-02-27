@@ -2,6 +2,8 @@
   "name": "CrowdNode.js UI",
   "short_name": "cnui",
   "description": "a Graphical User Interface (GUI) for CrowdNode.js",
+  "start_url": "/crowdnode-ui/",
+  "scope": "/crowdnode-ui/",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",
