@@ -73,23 +73,23 @@ export default async function main() {
 
   _privateKeys = await getStoredKeys(passphrase)
 
-  if (
-    currentPage === PAGE_ONBOARD &&
-    document.body.clientWidth >= 650
-  ) {
-    return location.replace(
-      IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
-    )
-  }
+  // if (
+  //   currentPage === PAGE_ONBOARD &&
+  //   document.body.clientWidth >= 650
+  // ) {
+  //   return location.replace(
+  //     IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
+  //   )
+  // }
 
-  if (
-    [
-      PAGE_DASH,
-      PAGE_SETTINGS
-    ].includes(currentPage)
-  ) {
-    return location.replace('/wallet')
-  }
+  // if (
+  //   [
+  //     PAGE_DASH,
+  //     PAGE_SETTINGS
+  //   ].includes(currentPage)
+  // ) {
+  //   return location.replace('/wallet')
+  // }
 
   if (_privateKeys.length === 0) {
     let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
