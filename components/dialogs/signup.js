@@ -7,10 +7,12 @@ import {
 import {
   trigger,
   // toDuff,
+  isDecryptedPhraseOrWif,
 } from '../../utils.js'
 import {
   getAddrRows,
   hasOrRequestFunds,
+  requestFunds,
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
@@ -77,6 +79,9 @@ export function setupSignupDialog(el, state = {}) {
         I accept the CrowdNode <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a>
       </label>
     </fieldset>
+
+    <p><em>This process may take a while, please be patient.</em></p>
+
     <fieldset class="inline">
       <button type="reset" title="${state.cancelAlt}">
         <span>${state.cancelTxt}</span>
@@ -151,15 +156,20 @@ export function setupSignupDialog(el, state = {}) {
       }
     )
 
+    let cnStatus
     let cnSignup
     let cnAccept
 
-    if (state.address && state.passphrase) {
-      console.log(
-        'signup privKey',
-        state.address,
-        state.passphrase,
-      )
+    let funds = await hasOrRequestFunds(
+      state.address,
+      signupTotal,
+      'to signup for CrowdNode'
+    )
+
+    if (state.address && (
+      state.passphrase ||
+      isDecryptedPhraseOrWif(state.phraseOrWif)
+    )) {
       let fromWif = await getPrivateKey(
         state.address, state.passphrase
       ) // , pass
@@ -167,26 +177,24 @@ export function setupSignupDialog(el, state = {}) {
       console.log(
         'privKey',
         state.address,
-        state.passphrase.length,
+        state.passphrase?.length,
         fromWif.length
-      )
-
-      let funds = await hasOrRequestFunds(
-        state.address,
-        signupTotal,
-        'to signup for CrowdNode'
       )
 
       dialog.querySelector('figure')
         .insertAdjacentElement('afterbegin', progress)
-      form.querySelector('fieldset:last-child').disabled = true
+      form.querySelectorAll('fieldset.inline')?.forEach(el => {
+        el.disabled = true
+      })
 
       document.body.insertAdjacentHTML(
         'afterbegin',
         `<progress id="pageLoader" class="pending"></progress>`,
       )
 
-      let cnStatus = await CrowdNode.status(state.address, hotwallet);
+      cnStatus = await CrowdNode.status(state.address, hotwallet);
+
+      console.log('CrowdNode Status', cnStatus)
 
       if (
         !cnStatus ||
@@ -197,7 +205,10 @@ export function setupSignupDialog(el, state = {}) {
       }
 
       if (
-        cnStatus?.signup > 0 && cnStatus?.accept === 0
+        (
+          cnSignup?.satoshis > 0 ||
+          cnStatus?.signup > 0
+        ) && cnStatus?.accept === 0
       ) {
         state.submitTxt = 'Accept CrowdNode Terms of Service'
 
@@ -207,13 +218,20 @@ export function setupSignupDialog(el, state = {}) {
         console.log('accept terms of service for CrowdNode', cnAccept)
       }
     }
+    let signupAcceptComplete = cnStatus?.signup > 0 && cnStatus?.accept > 0
+    let completeStatus = signupAcceptComplete
 
-    if (cnSignup && cnAccept) {
+    if (cnSignup || cnAccept || (
+      cnStatus?.signup > 0 && cnStatus?.accept > 0
+    )) {
       document.getElementById('pageLoader')?.remove()
       dialog.querySelector('progress')?.remove()
+      form.querySelectorAll('fieldset.inline')?.forEach(el => {
+        el.disabled = true
+      })
     }
 
-    dialog.close(cnSignup || 'cancel')
+    dialog.close(cnSignup?.txid || cnAccept?.txid || completeStatus || 'cancel')
   }
 
   dialog.addEventListener('close', handleClose)
