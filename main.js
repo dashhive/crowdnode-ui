@@ -48,8 +48,9 @@ const PAGE_SETTINGS = 'settings'
 export default async function main() {
   defineFormatToDash()
 
+  let IS_PROD = location.pathname.includes('crowdnode-ui')
   let PROD = location.pathname.split('crowdnode-ui')
-  if (PROD) {
+  if (IS_PROD) {
     currentPage = PROD?.[1]?.slice(1) || 'onboarding'
   } else {
     currentPage = location.pathname.slice(1) || 'onboarding'
@@ -76,7 +77,9 @@ export default async function main() {
     currentPage === PAGE_ONBOARD &&
     document.body.clientWidth >= 650
   ) {
-    return location.replace('/wallet')
+    return location.replace(
+      IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
+    )
   }
 
   if (
