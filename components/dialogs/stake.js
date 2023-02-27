@@ -52,12 +52,19 @@ export function setupStakeDialog(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
+      <h2>Stake in CrowdNode</h2>
+
+      <label for="stakeAmount">
+        Amount
+      </label>
       <input
+        id="stakeAmount"
         type="number"
         name="amount"
         step="0.00000001"
         placeholder="Ðash Amount (0.001)"
       />
+      <em>Enter the amount you wish to stake.</em>
     </fieldset>
     <fieldset class="inline">
       <button type="reset" title="${state.cancelAlt}">
@@ -131,7 +138,7 @@ export function setupStakeDialog(el, state = {}) {
       console.log(
         'privKey',
         state.address,
-        state.passphrase.length,
+        state.passphrase?.length,
         fromWif.length
       )
 
@@ -148,6 +155,9 @@ export function setupStakeDialog(el, state = {}) {
         'afterbegin',
         `<progress id="pageLoader" class="pending"></progress>`,
       )
+      form.querySelectorAll('fieldset')?.forEach(el => {
+        el.disabled = true
+      })
 
       try {
         cnStake = await CrowdNode.deposit(
