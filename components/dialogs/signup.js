@@ -67,6 +67,11 @@ export function setupSignupDialog(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
+      <h2>Signup for CrowdNode</h2>
+
+      <p>To stake your Dash and begin earning interest, read and accept the CrowdNode Terms and Conditions, then fund your wallet to complete the signup process.</p>
+    </fieldset>
+    <fieldset class="inline">
       <label>
         <input name="acceptToS" type="checkbox" />
         I accept the CrowdNode <a href="https://crowdnode.io/terms/" target="_blank">Terms and Conditions</a>

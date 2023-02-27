@@ -403,6 +403,7 @@ label {
 }
 label > input[type=checkbox] {
   width: 2rem;
+  height: 2.5rem;
   flex: 0 0 auto;
 }
 fieldset:not(:disabled) label {
@@ -475,6 +476,9 @@ form.btn fieldset {
 form.btn fieldset button {
   background-color: transparent;
   border: 0 solid transparent;
+}
+form.btn button:focus {
+  outline: 0;
 }
 
 a {
