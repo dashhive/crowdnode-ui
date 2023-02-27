@@ -34,7 +34,7 @@
     "@dashincubator/ripemd160": "^3.0.0",
     "@dashincubator/secp256k1": "^1.7.1-5",
     "crowdnode": "^1.8.0",
-    "dashhd": "^3.0.0",
+    "dashhd": "dashhive/DashHD.js#main",
     "dashkeys": "dashhive/DashKeys.js#main",
     "dashphrase": "^1.3.5",
     "dashsight": "^1.4.0-2",
