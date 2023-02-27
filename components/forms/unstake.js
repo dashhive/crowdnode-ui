@@ -18,7 +18,7 @@ export function setupUnstakeButton(el, state = {}) {
     ...state,
   }
 
-  console.log('setupUnstakeButton state', state)
+  // console.log('setupUnstakeButton state', state)
 
   const form = document.createElement('form')
 
