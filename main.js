@@ -48,7 +48,12 @@ const PAGE_SETTINGS = 'settings'
 export default async function main() {
   defineFormatToDash()
 
-  currentPage = location.pathname.split('crowdnode-ui')?.[1]?.slice(1) || location.pathname.slice(1) || 'onboarding'
+  let PROD = location.pathname.split('crowdnode-ui')
+  if (PROD) {
+    currentPage = PROD?.[1]?.slice(1) || 'onboarding'
+  } else {
+    currentPage = location.pathname.slice(1) || 'onboarding'
+  }
   console.log('main location', currentPage, location.hash, location.search)
   // console.info('PAGE:', currentPage)
 
