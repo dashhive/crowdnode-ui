@@ -777,18 +777,21 @@ dialog.responsive {
   opacity: 1;
   z-index: 9;
   padding: 2rem;
+  flex-direction: column;
 }
 dialog form {
+  box-sizing: border-box;
+  display: flex;
   max-width: 100%;
   width: 100%;
   flex: 1 1 auto;
   justify-self: center;
-  display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 dialog.responsive form {
   justify-content: center;
+  /* max-width: 83vw; */
 }
 dialog.responsive fieldset:first-child {
   justify-content: center;
