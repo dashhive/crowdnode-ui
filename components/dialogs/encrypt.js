@@ -3,6 +3,7 @@ import {
 } from '../../utils.js'
 import {
   getAddrRows,
+  getStakeRows,
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
@@ -151,8 +152,16 @@ export async function setupEncryptDialog(el, state = {}) {
 
       const decryptedStoredKeys = await getStoredKeys(passphrase)
 
-      let addrRows = await getAddrRows(
+      await getAddrRows(
         $d.querySelector('#addressGrid'),
+        decryptedStoredKeys,
+        {
+          status: () => trigger("set:pass", passphrase),
+          passphrase
+        }
+      )
+      await getStakeRows(
+        $d.querySelector('#stakingGrid'),
         decryptedStoredKeys,
         {
           status: () => trigger("set:pass", passphrase),

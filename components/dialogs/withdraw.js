@@ -7,6 +7,7 @@ import {
 import { trigger, toDuff, addrToPubKeyHash } from '../../utils.js'
 import {
   getAddrRows,
+  getStakeRows,
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
@@ -114,6 +115,14 @@ export function setupWithdrawDialog(el, state = {}) {
     let storedKeys = await getStoredKeys(state.passphrase)
     await getAddrRows(
       document.querySelector('#addressGrid'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
+      }
+    )
+    await getStakeRows(
+      document.querySelector('#stakingGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", state.passphrase),

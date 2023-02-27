@@ -60,7 +60,7 @@
 </nav>
 
 <main>
-  <header>
+  <!-- <header>
     <aside class="dash-status">
       <h3>Dash Wallet</h3>
       <div class="balance">Balance: </div>
@@ -71,14 +71,12 @@
       </form>
     </aside>
 
-    <!-- <h1><a href="#">CrowdNode.js UI</a></h1> -->
-
     <aside class="cn-status">
       <h3>CrowdNode</h3>
       <div class="balance">Balance: </div>
       <div class="dividends">Dividends: </div>
     </aside>
-  </header>
+  </header> -->
 
   <section class="page" id="onboarding">
     <!-- <form name="privKeyForm" comp-init="./components/forms/private-key.js">
@@ -159,7 +157,7 @@
     </form> -->
 
     <h1>Wallets</h1>
-    <div class="grid hidden" id="addressGrid">
+    <div class="grid wallet-grid hidden" id="addressGrid">
       <header>
         <article>
           <div title="Encrypted Status"></div>
@@ -167,9 +165,6 @@
           <div>Deposit</div>
           <div>Balance</div>
           <div>Withdraw</div>
-          <div>Staked</div>
-          <div>Stake</div>
-          <div>Unstake</div>
         </article>
       </header>
       <section>
@@ -242,19 +237,33 @@
     </form> -->
   </section>
   <section class="page" id="staking">
-    <!-- <form name="depositCrowdNodeForm">
-      <fieldset disabled>
-        <input
-          type="number"
-          name="amount"
-          step="0.00000001"
-          placeholder="Ðash Amount (0.001)"
-        />
-      </fieldset>
-      <fieldset disabled>
-        <button type="submit">Deposit Funds to CrowdNode</button>
-      </fieldset>
-    </form> -->
+    <h1>Staking</h1>
+    <div class="grid staking-grid hidden" id="stakingGrid">
+      <header>
+        <article>
+          <div title="Encrypted Status"></div>
+          <div>Public Address</div>
+          <div>Balance</div>
+          <div>Staked</div>
+          <div>Stake</div>
+          <div>Unstake</div>
+        </article>
+      </header>
+      <section>
+      </section>
+      <!-- <footer>
+        <article>
+          <div></div>
+          <div></div>
+          <div>Total</div>
+          <div></div>
+          <div>Total</div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </article>
+      </footer> -->
+    </div>
   </section>
   <section class="page" id="settings">
   </section>

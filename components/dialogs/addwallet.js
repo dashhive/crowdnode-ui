@@ -4,6 +4,7 @@ import {
 } from '../../utils.js'
 import {
   getAddrRows,
+  getStakeRows,
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
@@ -159,11 +160,19 @@ export function setupAddWalletDialog(el, state = {}) {
     // @ts-ignore
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
-    let addrRows = await getAddrRows(
+    await getAddrRows(
       $d.querySelector('#addressGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)
+      }
+    )
+    await getStakeRows(
+      $d.querySelector('#stakingGrid'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", passphrase),
+        passphrase
       }
     )
 
@@ -187,11 +196,19 @@ export function setupAddWalletDialog(el, state = {}) {
     // @ts-ignore
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
-    let addrRows = await getAddrRows(
+    await getAddrRows(
       $d.querySelector('#addressGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)
+      }
+    )
+    await getStakeRows(
+      $d.querySelector('#stakingGrid'),
+      storedKeys,
+      {
+        status: () => trigger("set:pass", passphrase),
+        passphrase
       }
     )
 
