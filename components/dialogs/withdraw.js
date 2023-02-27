@@ -58,17 +58,30 @@ export function setupWithdrawDialog(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
+      <h2>Withdraw Dash</h2>
+
+      <label for="withdrawToAddress">
+        Pay to Address
+      </label>
       <input
+        id="withdrawToAddress"
         name="toAddress"
         placeholder="Send to Address"
         spellcheck="false"
       />
+      <em>Enter the address you would like to transfer Dash to.</em><br/>
+
+      <label for="withdrawAmount">
+        Amount
+      </label>
       <input
+        id="withdrawAmount"
         type="number"
         name="amount"
         step="0.00000001"
         placeholder="Ðash Amount (0.001)"
       />
+      <em>Leave this field blank to transfer the entire available balance.</em>
     </fieldset>
     <fieldset class="inline">
       <button type="reset" title="${state.cancelAlt}">
