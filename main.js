@@ -76,11 +76,15 @@ export default async function main() {
     let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
 
     addWalletDialog.showModal()
+
+    $d.querySelector('#addressGrid').insertAdjacentHTML('beforebegin', `
+      <h4><em>Looks like you need to add or generate a new wallet.</em></h4>
+    `)
   }
 
-  if (currentPage === PAGE_WALLET) {
+  if (currentPage === PAGE_WALLET && _privateKeys.length > 0) {
     await getAddrRows(
-      $d.querySelector('#addressGrid section'),
+      $d.querySelector('#addressGrid'),
       _privateKeys,
       {
         status: () => trigger("set:pass", passphrase),

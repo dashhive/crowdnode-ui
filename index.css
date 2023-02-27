@@ -914,6 +914,24 @@ section.page.active {
   padding: 1rem;
 }
 
+#addWalletModal form fieldset {
+  text-align: left;
+  justify-content: center;
+}
+
+#addWalletModal form:last-child fieldset:last-child {
+  margin-top: 3rem;
+}
+
+#addWalletModal form > h2 {
+  margin: 3rem auto;
+}
+
+
+.hidden {
+  display: none;
+}
+
 
 
 @media (min-width: 650px) {
