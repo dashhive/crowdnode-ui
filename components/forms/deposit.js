@@ -2,7 +2,7 @@ import {
   requestFunds,
 } from '../../lib/ui.js'
 
-import { isDecryptedPhraseOrWif } from '../../utils.js'
+// import { isDecryptedPhraseOrWif } from '../../utils.js'
 
 const initialState = {
   id: 'Button',
