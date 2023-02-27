@@ -24,22 +24,33 @@ import {
 //   CrowdNode,
 // } from '../../imports.js'
 
+// https://stackoverflow.com/questions/1026069/how-do-i-make-the-first-letter-of-a-string-uppercase-in-javascript
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 /** @type {document} */
 const $d = document;
 
 let encryptedStore
 let passphrase
 
-const initialState = {
-  id: 'Modal',
-  name: 'encrypt',
-  submitTxt: 'Encrypt/Decrypt',
-  submitAlt: 'Encrypt/Decrypt Wallet',
-  cancelTxt: 'Cancel',
-  cancelAlt: 'Cancel Encrypt/Decrypt',
-}
-
 export async function setupEncryptDialog(el, state = {}) {
+  const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
+
+  let cryptDirection = isStoreEncrypted ? 'decrypt' : 'encrypt'
+  let capCryptDir = `${capitalizeFirstLetter(cryptDirection)}`
+  let title = `${capCryptDir} Wallet`
+
+  const initialState = {
+    id: 'Modal',
+    name: 'encrypt',
+    submitTxt: capCryptDir,
+    submitAlt: title,
+    cancelTxt: 'Cancel',
+    cancelAlt: `Cancel ${capCryptDir}`,
+  }
+
   state = {
     ...initialState,
     ...state,
@@ -71,8 +82,22 @@ export async function setupEncryptDialog(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
-      <p>Enter a passphrase to encrypt the data stored in the wallet(s).</p>
-      <input type="password" name="passphrase" placeholder="Encryption Passphrase" minlength="1" spellcheck="false" />
+      <h2>${title}</h2>
+
+      <label for="encryptPassphrase">
+        Passphrase
+      </label>
+      <input
+        type="password"
+        id="encryptPassphrase"
+        name="passphrase"
+        placeholder="${capCryptDir} Passphrase"
+        minlength="1"
+        spellcheck="false"
+      />
+
+      <p>Enter a passphrase to ${cryptDirection} the wallet recovery phrase(s) stored in your browser's Local Storage.</p>
+
       <div class="error"></div>
     </fieldset>
     <fieldset class="inline">
@@ -112,7 +137,6 @@ export async function setupEncryptDialog(el, state = {}) {
     passphrase = event.target.passphrase?.value
 
     const storedKeys = await getStoredKeys()
-    const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
 
     if (passphrase) {
       // console.log('passphrase', passphrase)
