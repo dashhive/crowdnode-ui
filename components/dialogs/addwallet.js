@@ -87,13 +87,20 @@ export function setupAddWalletDialog(el, state = {}) {
 
   addForm.innerHTML = `
     <fieldset>
+      <h2>Add Existing Wallet</h2>
+
+      <label for="addWalletRecoveryPhrase">
+        Recovery Phrase or Private Key WIF
+      </label>
       <input
+        id="addWalletRecoveryPhrase"
         name="privateKey"
-        placeholder="Ðash Private Key (WIF)"
+        placeholder="Ðash Recovery Phrase"
         spellcheck="false"
       />
+      <p><em>Choose this option if you already have a recovery phrase or WIF.</em></p>
     </fieldset>
-    <fieldset class="inline">
+    <fieldset class="">
       <button type="submit" title="${state.submitAddAlt}">
         <span>${state.submitAddTxt}</span>
       </button>
@@ -101,12 +108,18 @@ export function setupAddWalletDialog(el, state = {}) {
   `
 
   genForm.innerHTML = `
+    <h2>OR</h2>
+
+    <fieldset>
+      <h2>Generate a New Wallet</h2>
+      <p><em>Choose this option if you would like to generate a brand new recovery phrase.</em></p>
+      <button type="submit" title="${state.submitGenAlt}">
+        <span>${state.submitGenTxt}</span>
+      </button>
+    </fieldset>
     <fieldset class="inline">
       <button type="reset" title="${state.cancelGenAlt}">
         <span>${state.cancelGenTxt}</span>
-      </button>
-      <button type="submit" title="${state.submitGenAlt}">
-        <span>${state.submitGenTxt}</span>
       </button>
     </fieldset>
   `
@@ -147,7 +160,7 @@ export function setupAddWalletDialog(el, state = {}) {
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
     let addrRows = await getAddrRows(
-      $d.querySelector('#addressGrid section'),
+      $d.querySelector('#addressGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)
@@ -175,7 +188,7 @@ export function setupAddWalletDialog(el, state = {}) {
     await storePhraseOrWif(unstoredKeys, passphrase)
     let storedKeys = await getStoredKeys(passphrase)
     let addrRows = await getAddrRows(
-      $d.querySelector('#addressGrid section'),
+      $d.querySelector('#addressGrid'),
       storedKeys,
       {
         status: () => trigger("set:pass", passphrase)
