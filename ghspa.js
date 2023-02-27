@@ -41,6 +41,7 @@
          var a = v.split('=')
          q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&')
        })
+       console.log('ghspa.js resolve', q)
        if (q.p !== undefined) {
          window.history.replaceState(null, null,
            repo + (q.p || '') +
