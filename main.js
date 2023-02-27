@@ -38,6 +38,7 @@ const PKIV = 'privateKeys_iv'
 const KEY_PREFIX = 'dk__'
 const ENCRYPT_IV = 'encryptage'
 
+const PAGE_ONBOARD = 'onboarding'
 const PAGE_DASH = 'dashboard'
 const PAGE_WALLET = 'wallet'
 const PAGE_STAKE = 'staking'
@@ -48,6 +49,7 @@ export default async function main() {
 
   currentPage = location.pathname.slice(1) || 'onboarding'
   console.log('main location', currentPage, location.hash, location.search)
+  // console.info('PAGE:', currentPage)
 
   let pageEl = $d.querySelector(`section.page#${currentPage}`)
 
@@ -64,11 +66,21 @@ export default async function main() {
 
   _privateKeys = await getStoredKeys(passphrase)
 
-  if (currentPage === PAGE_WALLET) {
-    console.info('ON PAGE:', PAGE_WALLET)
+  if (
+    [PAGE_ONBOARD, PAGE_DASH, PAGE_SETTINGS].includes(currentPage)
+  ) {
+    return location.replace('/wallet')
+  }
 
-    let addrRows = await getAddrRows(
-      $d.querySelector('#addressList tbody'),
+  if (_privateKeys.length === 0) {
+    let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+
+    addWalletDialog.showModal()
+  }
+
+  if (currentPage === PAGE_WALLET) {
+    await getAddrRows(
+      $d.querySelector('#addressGrid section'),
       _privateKeys,
       {
         status: () => trigger("set:pass", passphrase),
@@ -76,12 +88,10 @@ export default async function main() {
       }
     )
 
-    console.info('WALLET ROWS', _privateKeys)
-
     trigger('set:pass', passphrase);
   }
 
-  console.log('un/encrypted private keys', _privateKeys)
+  console.log('address & private keys', _privateKeys)
 
   $d.querySelector('nav .encrypt')
     .addEventListener('click', async event => {
@@ -101,86 +111,6 @@ export default async function main() {
       addWalletDialog.showModal()
     })
 
-  $d.encPrivKey
-    .addEventListener('submit', async event => {
-      event.preventDefault()
-
-      passphrase = $d.encPrivKey.passphrase?.value
-
-      const storedKeys = await getStoredKeys()
-      const isStoreEncrypted = await store.getItem(`${ENCRYPT_IV}_iv`)
-
-      if (passphrase) {
-        // console.log('passphrase', passphrase)
-
-        $d.encPrivKey.passphrase.value = ''
-
-        encryptedStore = await initEncryptedStore(passphrase)
-
-        console.log('encPrivKey form selectedPrivateKey', {
-          selectedPrivateKey,
-          storedKeys,
-          isStoreEncrypted,
-        })
-
-        $d.privKeyForm.querySelector('button').disabled = false
-      }
-    })
-
-  $d.privKeyForm
-    .addEventListener('input', async (
-      /** @type {Event & { target: HTMLInputElement}} event */
-      event
-      ) => {
-      if (event.target.name === 'remember') {
-        rememberMe = event.target.checked
-
-        localStorage.setItem(
-          'remember',
-          rememberMe
-        )
-
-        if (rememberMe) {
-          swapStorage(
-            localStorage,
-            sessionStorage,
-            PK,
-          )
-          swapStorage(
-            localStorage,
-            sessionStorage,
-            PKIV,
-          )
-        } else {
-          swapStorage(
-            sessionStorage,
-            localStorage,
-            PK,
-          )
-          swapStorage(
-            sessionStorage,
-            localStorage,
-            PKIV,
-          )
-        }
-
-        store = rememberMe ? localStorage : sessionStorage
-
-        if (passphrase) {
-          encryptedStore = await initEncryptedStore(passphrase)
-        }
-      } else {
-        if (
-          selectedPrivateKey !== $d.privKeyForm.privateKey?.value?.trim()
-        ) {
-          $d.privKeyForm.querySelector('button').disabled = false
-        } else {
-          $d.privKeyForm.querySelector('button').disabled = true
-        }
-      }
-    })
-
-
   $d.balanceForm.addEventListener('submit', async event => {
     event.preventDefault()
 
@@ -196,20 +126,6 @@ export default async function main() {
       }
     }
   })
-
-  // Dynamically load components based on
-  // `comp-init` attribute and visibility
-  //
-  // $d.querySelectorAll('[comp-init]').forEach(
-  //   el => {
-  //     let isHidden = el.offsetParent === null
-  //     if (!isHidden) {
-  //       import(el?.getAttribute('comp-init')).then(({ init }) => {
-  //         init()
-  //       })
-  //     }
-  //   }
-  // )
 }
 
 main()
