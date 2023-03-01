@@ -80,6 +80,7 @@ export function setupStakeButton(el, state = {}) {
 
   form.addEventListener('submit', handleSubmit)
 
+  el.classList.remove('signup-col')
   el.insertAdjacentElement('afterbegin', form)
 
   return form

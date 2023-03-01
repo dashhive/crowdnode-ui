@@ -18,6 +18,7 @@ import {
 
 // const { hotwallet } = CrowdNode.main;
 // const { depositMinimum, stakeMinimum } = CrowdNode
+let feeEstimate = 500;
 
 const initialState = {
   id: 'Modal',
@@ -41,7 +42,7 @@ export function setupQrDialog(el, state = {}) {
   //   this[name] = newValue || ''
   // }
 
-  // console.log('qr dialog state', state)
+  console.log('qr dialog state', state)
 
   const dialog = document.createElement('dialog')
   const form = document.createElement('form')
@@ -123,9 +124,13 @@ export function setupQrDialog(el, state = {}) {
     }
   )
 
-  let fundingDiff = `<p>
-    You must deposit at least <strong><format-to-dash value="${toDash(state.needed)}" /></strong> ${state.msg}
-  </p>`
+  let fundingDiff = '<p>Deposit Dash (Đ) to this address to get started.</p>'
+
+  if (state.needed > feeEstimate) {
+    fundingDiff = `<p>
+      You must deposit at least <strong><format-to-dash value="${toDash(state.needed)}" /></strong> ${state.msg}
+    </p>`
+  }
 
   if (state.funds?.balanceSat >= 0) {
     if (

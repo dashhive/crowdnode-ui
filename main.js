@@ -48,6 +48,8 @@ const PAGE_SETTINGS = 'settings'
 export default async function main() {
   defineFormatToDash()
 
+  let locUrl = new URL(location.toString())
+
   let IS_PROD = location.pathname.includes('crowdnode-ui')
   let PROD = location.pathname.split('crowdnode-ui')
   if (IS_PROD) {
@@ -73,14 +75,15 @@ export default async function main() {
 
   _privateKeys = await getStoredKeys(passphrase)
 
-  // if (
-  //   currentPage === PAGE_ONBOARD &&
-  //   document.body.clientWidth >= 650
-  // ) {
-  //   return location.replace(
-  //     IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
-  //   )
-  // }
+  if (
+    currentPage === PAGE_ONBOARD &&
+    document.body.clientWidth >= 650 &&
+    !locUrl.searchParams.has('p')
+  ) {
+    return location.replace(
+      IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
+    )
+  }
 
   // if (
   //   [
@@ -88,20 +91,18 @@ export default async function main() {
   //     PAGE_SETTINGS
   //   ].includes(currentPage)
   // ) {
-  //   return location.replace('/wallet')
+  //   return location.replace(
+  //     IS_PROD ? '/crowdnode-ui/wallet' : '/wallet'
+  //   )
   // }
 
   if (_privateKeys.length === 0) {
     let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
 
     addWalletDialog.showModal()
-
-    $d.querySelector('#addressGrid').insertAdjacentHTML('beforebegin', `
-      <h4><em>Looks like you need to add or generate a new wallet.</em></h4>
-    `)
   }
 
-  if (currentPage === PAGE_WALLET && _privateKeys.length > 0) {
+  if (currentPage === PAGE_WALLET) {
     await getAddrRows(
       $d.querySelector('#addressGrid'),
       _privateKeys,
@@ -114,7 +115,7 @@ export default async function main() {
     trigger('set:pass', passphrase);
   }
 
-  if (currentPage === PAGE_STAKE && _privateKeys.length > 0) {
+  if (currentPage === PAGE_STAKE) {
     await getStakeRows(
       $d.querySelector('#stakingGrid'),
       _privateKeys,

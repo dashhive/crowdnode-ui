@@ -217,7 +217,10 @@ export function setupSignupDialog(el, state = {}) {
         (
           cnSignup?.satoshis > 0 ||
           cnStatus?.signup > 0
-        ) && cnStatus?.accept === 0
+        ) && (
+          cnStatus === null ||
+          cnStatus?.accept === 0
+        )
       ) {
         state.submitTxt = 'Accept CrowdNode Terms of Service'
 

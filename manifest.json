@@ -2,7 +2,7 @@
   "name": "CrowdNode.js UI",
   "short_name": "cnui",
   "description": "a Graphical User Interface (GUI) for CrowdNode.js",
-  "start_url": "/crowdnode-ui/",
+  "start_url": "/crowdnode-ui/withdraw",
   "scope": "/crowdnode-ui/",
   "dir": "auto",
   "lang": "en-US",
@@ -19,9 +19,8 @@
   ],
   "protocol_handlers": [
     {
-      "protocol": "dash",
-      "url": "/pay?type=%s"
+      "protocol": "web+dash",
+      "url": "/crowdnode-ui/withdraw?to=%s"
     }
   ]
-
 }

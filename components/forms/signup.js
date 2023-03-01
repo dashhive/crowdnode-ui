@@ -94,6 +94,7 @@ export function setupSignupButton(el, state = {}) {
 
   form.addEventListener('submit', handleSubmit)
 
+  el.classList.add('signup-col')
   el.insertAdjacentElement('afterbegin', form)
 
   return form

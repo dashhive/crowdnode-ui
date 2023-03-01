@@ -132,7 +132,7 @@ export function setupUnstakeDialog(el, state = {}) {
       }
     )
 
-    console.log('storedKeys', storedKeys)
+    console.log('unstake storedKeys', storedKeys)
   }
 
   let handleReset = event => {

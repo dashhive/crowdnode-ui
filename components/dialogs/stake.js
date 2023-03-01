@@ -65,7 +65,7 @@ export function setupStakeDialog(el, state = {}) {
         step="0.00000001"
         placeholder="Ðash Amount (0.001)"
       />
-      <em>Enter the amount you wish to stake.</em>
+      <em>Enter the amount you wish to stake or leave empty to stake entire balance.</em>
     </fieldset>
     <fieldset class="inline">
       <button type="reset" title="${state.cancelAlt}">
