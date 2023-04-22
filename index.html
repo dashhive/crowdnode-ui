@@ -31,7 +31,7 @@
 	<link rel="icon" type="image/png" href="./favicon.png">
 	<link rel="shortcut icon" href="./favicon.png">
 	<!-- <link rel="shortcut icon" href="assets/icons/favicon.ico"> -->
-	<link rel="manifest" href="./manifest.json?v=3" crossorigin="use-credentials">
+	<link rel="manifest" href="./manifest.json?v=0.0.1" crossorigin="use-credentials">
 
 	<link rel="icon" type="image/png" sizes="250x250" href="assets/icons/dash-d-rounded-square-250.png">
 	<link rel="apple-touch-icon" sizes="250x250" href="assets/icons/dash-d-rounded-square-250.png">
@@ -274,7 +274,7 @@
 </main>
 
 
-<script async>
+<script type="text/javascript" async>
   (function invertTheme(selector) {
     let theme = JSON.parse(localStorage.getItem('theme'))
 
@@ -288,6 +288,13 @@
         })
     }
   })('nav a.theme')
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(`sw.js`)
+      .then(function () {
+        console.log("Service Worker Registered");
+      });
+  }
 </script>
 <script src="./node_modules/@dashevo/dashcore-lib/dist/dashcore-lib.min.js"></script>
 <script src="./node_modules/@root/request/urequest.js"></script>

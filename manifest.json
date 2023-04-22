@@ -2,11 +2,11 @@
   "name": "CrowdNode.js UI",
   "short_name": "cnui",
   "description": "a Graphical User Interface (GUI) for CrowdNode.js",
-  "start_url": "/crowdnode-ui/withdraw",
+  "start_url": "/crowdnode-ui/wallet",
   "scope": "/crowdnode-ui/",
   "dir": "auto",
   "lang": "en-US",
-  "display": "standalone",
+  "display": "minimal-ui",
   "orientation": "portrait",
 	"background_color": "#eeeeee",
 	"theme_color": "#242424",
@@ -20,7 +20,37 @@
   "protocol_handlers": [
     {
       "protocol": "web+dash",
-      "url": "/crowdnode-ui/withdraw?to=%s"
+      "url": "/withdraw?to=%s"
+    }
+  ],
+  "related_applications": [],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "shortcuts": [
+    {
+      "name": "Wallet",
+      "url": "/wallet",
+      "icons": [
+        {
+          "src": "assets/icons/dash-d-rounded-square-250.png",
+          "sizes": "250x250",
+          "type": "image/png",
+          "purpose": "any monochrome"
+        }
+      ]
+    },
+    {
+      "name": "Staking",
+      "url": "/staking",
+      "icons": [
+        {
+          "src": "assets/icons/dash-d-rounded-square-250.png",
+          "sizes": "250x250",
+          "type": "image/png",
+          "purpose": "any monochrome"
+        }
+      ]
     }
   ]
 }

@@ -4,12 +4,13 @@ import {
 import {
   getAddrRows,
   getStakeRows,
-  displayBalances,
+  // displayBalances,
 } from './lib/ui.js'
 import {
   getStoredKeys,
-  swapStorage,
-  initEncryptedStore,
+  // swapStorage,
+  // initEncryptedStore,
+  checkCache,
 } from './lib/storage.js'
 import {
   CrowdNode,
@@ -46,6 +47,8 @@ const PAGE_STAKE = 'staking'
 const PAGE_SETTINGS = 'settings'
 
 export default async function main() {
+  checkCache()
+
   defineFormatToDash()
 
   let locUrl = new URL(location.toString())
@@ -164,5 +167,7 @@ export default async function main() {
   //   }
   // })
 }
+
+// window.addEventListener('load', main)
 
 main()
