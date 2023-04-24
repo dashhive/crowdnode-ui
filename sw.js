@@ -46,7 +46,7 @@ let fileCache = [
 
 self.addEventListener('install', function (event) {
   event.waitUntil(caches.open(cacheName).then((cache) => {
-    console.log(cacheName, 'installed successfully')
+    // console.info(cacheName, 'installed successfully')
     return cache.addAll(fileCache);
   }));
 });
@@ -55,17 +55,25 @@ self.addEventListener('fetch', function (event) {
 
   if (event.request.url.includes('clean-cache')) {
     caches.delete(cacheName);
-    console.log(cacheName, 'Cache cleared')
+    // console.info(cacheName, 'Cache cleared')
   }
 
   event.respondWith(
     caches.match(event.request)
       .then(function (response) {
-        if (response) {
-          console.log(cacheName, 'served from cache', event.request.url)
-        } else {
-          console.log(cacheName, 'not using cache ', event.request.url)
-        }
+        // if (response) {
+        //   console.info(
+        //     cacheName,
+        //     'served from cache',
+        //     event.request.url,
+        //   )
+        // } else {
+        //   console.info(
+        //     cacheName,
+        //     'not using cache ',
+        //     event.request.url,
+        //   )
+        // }
         return response || fetch(event.request);
       })
   )
@@ -76,7 +84,11 @@ self.addEventListener('activate', function (event) {
     caches.keys().then(function (cachedKeys) {
       cachedKeys.map(keyName => {
         if (keyName !== cacheName) {
-          console.log(cacheName, 'service worker: Removing old cache', keyName);
+          // console.info(
+          //   cacheName,
+          //   'service worker: Removing old cache',
+          //   keyName
+          // );
           return caches.delete(keyName);
         }
       })

@@ -24,6 +24,8 @@ import defineFormatToDash, { init as ftdInit } from './components/format-to-dash
 /** @type {document} */
 const $d = document;
 
+let locUrl = new URL(location.toString())
+let IS_PROD = location.pathname.includes('crowdnode-ui')
 let rememberMe = JSON.parse(localStorage.getItem('remember'))
 let store = rememberMe ? localStorage : sessionStorage
 let selectedPrivateKey = store.getItem('selectedPrivateKey')
@@ -46,37 +48,21 @@ const PAGE_WALLET = 'wallet'
 const PAGE_STAKE = 'staking'
 const PAGE_SETTINGS = 'settings'
 
-export default async function main() {
-  checkCache()
-
-  defineFormatToDash()
-
-  let locUrl = new URL(location.toString())
-
-  let IS_PROD = location.pathname.includes('crowdnode-ui')
-  let PROD = location.pathname.split('crowdnode-ui')
-  if (IS_PROD) {
-    currentPage = PROD?.[1]?.slice(1) || 'onboarding'
+export async function changeRoute(route) {
+  if (route.includes('#!/')) {
+    currentPage = route?.slice(3) || 'onboarding'
   } else {
-    currentPage = location.pathname.slice(1) || 'onboarding'
+    currentPage = 'onboarding'
   }
-  console.log('main location', currentPage, location.hash, location.search)
-  // console.info('PAGE:', currentPage)
+  // console.log('URL LOC:', location, IS_PROD)
+  // console.info('URL PAGE:', route, currentPage)
+
+  $d.querySelectorAll(`section.page.active`)
+    .forEach(el => el.classList.remove('active'))
 
   let pageEl = $d.querySelector(`section.page#${currentPage}`)
 
   pageEl?.classList.add('active')
-
-  CrowdNode.init({
-    // baseUrl: 'https://app.crowdnode.io',
-    // insightBaseUrl: 'https://insight.dash.org',
-    baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
-    insightBaseUrl: 'https://insight.dash.org/insight-api',
-    dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
-    dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
-  })
-
-  _privateKeys = await getStoredKeys(passphrase)
 
   if (
     currentPage === PAGE_ONBOARD &&
@@ -84,7 +70,7 @@ export default async function main() {
     !locUrl.searchParams.has('p')
   ) {
     return location.replace(
-      IS_PROD ? '/crowdnode-ui/wallet' : '/wallet' // '#!/wallet'
+      IS_PROD ? '/crowdnode-ui/#!/wallet' : '#!/wallet' //
     )
   }
 
@@ -98,12 +84,6 @@ export default async function main() {
   //     IS_PROD ? '/crowdnode-ui/wallet' : '/wallet'
   //   )
   // }
-
-  if (_privateKeys.length === 0) {
-    let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
-
-    addWalletDialog.showModal()
-  }
 
   if (currentPage === PAGE_WALLET) {
     await getAddrRows(
@@ -130,6 +110,31 @@ export default async function main() {
 
     trigger('set:pass', passphrase);
   }
+}
+
+export default async function main() {
+  checkCache()
+
+  defineFormatToDash()
+
+  CrowdNode.init({
+    // baseUrl: 'https://app.crowdnode.io',
+    // insightBaseUrl: 'https://insight.dash.org',
+    baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
+    insightBaseUrl: 'https://insight.dash.org/insight-api',
+    dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
+    dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
+  })
+
+  _privateKeys = await getStoredKeys(passphrase)
+
+  if (_privateKeys.length === 0) {
+    let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+
+    addWalletDialog.showModal()
+  }
+
+  await changeRoute(location.hash)
 
   console.log('address & private keys', _privateKeys)
 
@@ -166,6 +171,22 @@ export default async function main() {
   //     }
   //   }
   // })
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/Window/hashchange_event
+  window.addEventListener(
+    "hashchange",
+    async ({ newURL, oldURL }) => {
+      // console.log(
+      //   `route changed from ${
+      //     new URL(oldURL)?.hash
+      //   } to ${
+      //     new URL(newURL)?.hash
+      //   }`
+      // );
+      await changeRoute(location.hash)
+    },
+    false
+  );
 }
 
 // window.addEventListener('load', main)

@@ -25,8 +25,6 @@
       document.head.querySelector('title').insertAdjacentHTML('beforebegin', `<base href="/" />`)
     }
   </script>
-  <script type="text/javascript" src="./ghspa.js"></script>
-
 
 	<link rel="icon" type="image/png" href="./favicon.png">
 	<link rel="shortcut icon" href="./favicon.png">
@@ -55,15 +53,15 @@
 <nav>
   <a class="brand" href="#home">CrowdNode.js UI</a>
   <div class="menu" id="home">
-    <!-- <a class="dashboard" href="dashboard">Dashboard</a> -->
-    <a class="wallet" href="wallet">Wallet</a>
-    <a class="staking" href="staking">Staking</a>
+    <!-- <a class="dashboard" href="#!/dashboard">Dashboard</a> -->
+    <a class="wallet" href="#!/wallet">Wallet</a>
+    <a class="staking" href="#!/staking">Staking</a>
   </div>
   <div class="settings" id="settings">
     <a class="addwallet" href="#addwallet" title="Add Wallet">+</a>
     <a class="encrypt" href="#crypt" title="Encrypt / Decrypt">🔒</a>
     <a class="theme" href="#theme" title="Invert Theme"></a>
-    <!-- <a class="settings" href="settings" title="Settings">🛠</a> -->
+    <a class="settings" href="#!/settings" title="Settings">🛠</a>
   </div>
 </nav>
 
@@ -270,6 +268,7 @@
     </div>
   </section>
   <section class="page" id="settings">
+    <h1>Settings</h1>
   </section>
 </main>
 
@@ -288,6 +287,7 @@
         })
     }
   })('nav a.theme')
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register(`sw.js`)
@@ -299,6 +299,7 @@
 <script src="./node_modules/@dashevo/dashcore-lib/dist/dashcore-lib.min.js"></script>
 <script src="./node_modules/@root/request/urequest.js"></script>
 <script src="./node_modules/qrcode-svg/dist/qrcode.min.js"></script>
+<!-- <script src="./pwa-install.js"></script> -->
 <script src="./main.js" type="module" async defer></script>
 </body>
 </html>
