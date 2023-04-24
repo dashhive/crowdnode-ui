@@ -8,7 +8,7 @@ const initialState = {
   id: 'Button',
   name: 'withdraw',
   submitTxt: 'Withdraw',
-  submitAlt: 'Withdraw Dash Funds',
+  submitAlt: 'Withdraw Dash (Đ)',
   cancelTxt: 'Cancel',
   cancelAlt: 'Cancel Withdraw',
 }
@@ -43,7 +43,7 @@ export function setupWithdrawButton(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
-      <button type="submit">${state.submitTxt}</button>
+      <button type="submit" title="${state.submitAlt}">${state.submitTxt}</button>
     </fieldset>
   `
 

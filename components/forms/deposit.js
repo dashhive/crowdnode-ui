@@ -8,7 +8,7 @@ const initialState = {
   id: 'Button',
   name: 'deposit',
   submitTxt: 'Deposit',
-  submitAlt: 'Deposit in CrowdNode',
+  submitAlt: 'Deposit Dash (Đ)',
   cancelTxt: 'Cancel',
   cancelAlt: 'Cancel Deposit',
 }
@@ -43,7 +43,7 @@ export function setupDepositButton(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
-      <button type="submit">${state.submitTxt}</button>
+      <button type="submit" title="${state.submitAlt}">${state.submitTxt}</button>
     </fieldset>
   `
 

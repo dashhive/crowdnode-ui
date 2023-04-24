@@ -28,7 +28,7 @@ export function setupStakeButton(el, state = {}) {
 
   form.innerHTML = `
     <fieldset>
-      <button type="submit">${state.submitTxt}</button>
+      <button type="submit" title="${state.submitAlt}">${state.submitTxt}</button>
     </fieldset>
   `
 

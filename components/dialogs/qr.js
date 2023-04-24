@@ -27,6 +27,8 @@ const initialState = {
   // submitAlt: 'Encrypt/Decrypt Wallet',
   cancelTxt: 'Cancel',
   cancelAlt: 'Cancel',
+  copyTxt: '📋',
+  copyAlt: 'Copy Address',
 }
 
 export function setupQrDialog(el, state = {}) {
@@ -151,7 +153,7 @@ export function setupQrDialog(el, state = {}) {
     <figcaption>
       <fieldset class="inline">
         <input name="qrAddr" value="${state.address}" spellcheck="false" />
-        <button class="copy">📋</button>
+        <button class="copy" title="${state.copyAlt}">${state.copyTxt}</button>
       </fieldset>
       ${fundingDiff}
     </figcaption>
@@ -172,7 +174,8 @@ export function setupQrDialog(el, state = {}) {
   dialog.querySelector('figure')
     .insertAdjacentElement('afterbegin', form)
 
-  form.querySelector('button.copy')?.addEventListener('click', copyToClipboard)
+  form.querySelector('button.copy')
+    ?.addEventListener('click', copyToClipboard)
 
   el.insertAdjacentElement('afterend', dialog)
 
