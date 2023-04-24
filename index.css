@@ -234,34 +234,32 @@ nav {
   height: auto;
 }
 
-footer {
-  position: fixed;
+main > footer {
+  background-color: var(--bgc);
+  /* position: fixed; */
   display: flex;
   flex-direction: column;
-  /* flex: 1 1 auto; */
-  width: 100%;
   justify-content: space-between;
   line-height: 2;
-
-  background-color: var(--bgc);
+  margin-top: 2rem;
   z-index: 10;
-  bottom: 0;
-  left: 0;
+  /* bottom: 0;
+  left: 0; */
   width: 100%;
   height: auto;
 }
 
-footer > h4,
-footer > h5 {
+main > footer > h4,
+main > footer > h5 {
   margin: 0;
   text-align: center;
   font-size: 1.1rem;
 }
 
-footer > h4 > span {
+main > footer > h4 > span {
   display: inline-block;
 }
-footer > h5 {
+main > footer > h5 {
   font-weight: 100;
 }
 
@@ -292,6 +290,14 @@ nav > #home {
   flex-direction: column;
 }
 
+nav > #navBalances {
+  align-items: center;
+  flex: 0 1 auto;
+  position: fixed;
+  right: 1rem;
+  top: 3rem;
+}
+
 nav a {
   display: flex;
   height: 3rem;
@@ -306,7 +312,7 @@ nav a:hover {
 }
 
 nav #home a:hover,
-nav #settings a:hover {
+nav #navSettings a:hover {
   background-color: var(--linkbgh);
 }
 
@@ -1087,8 +1093,15 @@ section.page.active {
     top: auto;
     right: auto;
     height: auto;
+    width: auto;
     overflow: auto;
     flex-direction: row;
+  }
+
+  nav > #navBalances {
+    justify-content: center;
+    align-items: center;
+    flex: 1 1 auto;
   }
 
   dialog.responsive {

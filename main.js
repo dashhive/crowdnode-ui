@@ -5,12 +5,15 @@ import {
   getAddrRows,
   getStakeRows,
   // displayBalances,
+  // getCurrencies,
+  updateFiatDisplay,
 } from './lib/ui.js'
 import {
   getStoredKeys,
   // swapStorage,
   // initEncryptedStore,
   checkCache,
+  fiatCurrency,
 } from './lib/storage.js'
 import {
   CrowdNode,
@@ -18,29 +21,32 @@ import {
 
 import setupEncryptDialog from './components/dialogs/encrypt.js'
 import setupAddWalletDialog from './components/dialogs/addwallet.js'
+import setupFiatSelector from './components/forms/fiat.js'
 
-import defineFormatToDash, { init as ftdInit } from './components/format-to-dash.js'
+import defineFormatToDash, {
+  init as ftdInit
+} from './components/format-to-dash.js'
 
 /** @type {document} */
 const $d = document;
 
 let locUrl = new URL(location.toString())
 let IS_PROD = location.pathname.includes('crowdnode-ui')
-let rememberMe = JSON.parse(localStorage.getItem('remember'))
-let store = rememberMe ? localStorage : sessionStorage
-let selectedPrivateKey = store.getItem('selectedPrivateKey')
+// let rememberMe = JSON.parse(localStorage.getItem('remember'))
+// let store = rememberMe ? localStorage : sessionStorage
+// let selectedPrivateKey = store.getItem('selectedPrivateKey')
 let passphrase
 let currentPage
-let encryptedStore
+// let encryptedStore
 
 let _privateKeys = []
 
-const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
-const SK = 'selectedKey'
-const PK = 'privateKeys'
-const PKIV = 'privateKeys_iv'
-const KEY_PREFIX = 'dk__'
-const ENCRYPT_IV = 'encryptage'
+// const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
+// const SK = 'selectedKey'
+// const PK = 'privateKeys'
+// const PKIV = 'privateKeys_iv'
+// const KEY_PREFIX = 'dk__'
+// const ENCRYPT_IV = 'encryptage'
 
 const PAGE_ONBOARD = 'onboarding'
 const PAGE_DASH = 'dashboard'
@@ -110,6 +116,18 @@ export async function changeRoute(route) {
 
     trigger('set:pass', passphrase);
   }
+
+  if (currentPage === PAGE_SETTINGS) {
+    setupFiatSelector(
+      $d.querySelector('#settings'),
+      {
+        // submitTxt: '📥',
+        // address: pub,
+        // phraseOrWif: priv,
+        // passphrase: state.passphrase
+      },
+    )
+  }
 }
 
 export default async function main() {
@@ -155,6 +173,12 @@ export default async function main() {
 
       addWalletDialog.showModal()
     })
+
+  localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(
+    document.querySelector('#navBalances'),
+    fiatCurrency
+  )))
+  // console.log('MAIN FIAT', fiat)
 
   // $d.balanceForm.addEventListener('submit', async event => {
   //   event.preventDefault()
