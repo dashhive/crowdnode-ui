@@ -123,13 +123,19 @@ export async function setupEncryptDialog(el, state = {}) {
   }
   let handleReset = event => {
     event.preventDefault()
-    console.log('encrypt dialog handleReset', event)
+    // console.log('encrypt dialog handleReset', event)
     form?.removeEventListener('close', handleReset)
     dialog.close('cancel')
   }
+  let handleChange = event => {
+    event.preventDefault()
+    // console.log('encrypt field handleChange', event)
+    event.target.setCustomValidity('')
+    event.target.reportValidity()
+  }
   let handleSubmit = async event => {
     event.preventDefault()
-    console.log('encrypt dialog handleSubmit', event)
+    // console.log('encrypt dialog handleSubmit', event)
 
     // @ts-ignore
     passphrase = event.target.passphrase?.value
@@ -143,11 +149,21 @@ export async function setupEncryptDialog(el, state = {}) {
       event.target.passphrase.value = ''
       // event.target.querySelector('button[type="submit"]').disabled = true
 
-      await encryptKeys(storedKeys, passphrase)
+      // await encryptKeys(storedKeys, passphrase)
 
       encryptedStore = await initEncryptedStore(passphrase)
 
-      const decryptedStoredKeys = await getStoredKeys(passphrase)
+      let decryptedStoredKeys = await getStoredKeys(passphrase)
+
+      let decryptSuccess = false
+
+      decryptedStoredKeys.forEach(
+        ([addr, phrase]) => {
+          if (phrase !== null) {
+            decryptSuccess = true
+          }
+        }
+      )
 
       await getAddrRows(
         $d.querySelector('#addressGrid'),
@@ -170,25 +186,39 @@ export async function setupEncryptDialog(el, state = {}) {
 
       trigger("set:pass", passphrase);
 
+      if (!isStoreEncrypted || decryptSuccess) {
+        await encryptKeys(storedKeys, passphrase)
+
+        decryptedStoredKeys = await getStoredKeys(passphrase)
+        // event.target.querySelector('button[type="submit"]').disabled = false
+        // $d.privKeyForm.querySelector('button').disabled = false
+
+        // form?.removeEventListener('change', handleChange)
+        form?.removeEventListener('reset', handleReset)
+        form?.removeEventListener('submit', handleSubmit)
+
+        dialog.close(passphrase)
+      } else {
+        event.target.passphrase.setCustomValidity(
+          'Unable to decrypt wallet(s)'
+        )
+        event.target.passphrase.reportValidity()
+      }
+
       console.log('encrypt dialog form selectedPrivateKey', {
         storedKeys,
+        encryptedStore,
         decryptedStoredKeys,
         isStoreEncrypted,
-        el: decryptedStoredKeys.length,
-        ul: storedKeys.length,
+        dl: decryptedStoredKeys.length,
+        el: storedKeys.length,
       })
-
-      // event.target.querySelector('button[type="submit"]').disabled = false
-      // $d.privKeyForm.querySelector('button').disabled = false
-
-      form?.removeEventListener('submit', handleSubmit)
-
-      dialog.close(passphrase)
     }
   }
 
   dialog.addEventListener('close', handleClose)
 
+  form.addEventListener('change', handleChange)
   form.addEventListener('reset', handleReset)
   form.addEventListener('submit', handleSubmit)
 
