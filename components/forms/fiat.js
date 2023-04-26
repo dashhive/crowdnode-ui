@@ -8,8 +8,6 @@ import {
 
 let selectedFiat = fiatCurrency
 
-// import { isDecryptedPhraseOrWif } from '../../utils.js'
-
 const initialState = {
   id: 'Button',
   name: 'deposit',
@@ -29,12 +27,12 @@ export async function setupFiatSelector(el, state = {}) {
   const currencyList = document.createElement('datalist')
   currencyList.id = 'fiat-currencies'
 
-  form.classList.add('btn')
+  form.classList.add('field')
 
   form.name = `${state.name}Form`
 
   form.innerHTML = `
-    <fieldset>
+    <fieldset class="inline">
       <label for="fiat-choice">Currency:</label>
       <input
         type="search"
@@ -49,9 +47,12 @@ export async function setupFiatSelector(el, state = {}) {
 
   let handleChange = async event => {
     event.preventDefault()
+    console.log(`${state.name} select handleChange====`, event)
 
-    localStorage.setItem('selectedFiat', event?.target?.value)
-    selectedFiat = event?.target?.value
+    let val = event?.target?.value || event?.target?.['fiat-choice']?.value
+
+    localStorage.setItem('selectedFiat', val)
+    selectedFiat = val
 
     console.log(`${state.name} select handleChange`, selectedFiat)
 
@@ -63,23 +64,16 @@ export async function setupFiatSelector(el, state = {}) {
 
   form.querySelector('#fiat-choice')
     .addEventListener('change', handleChange)
+  form.addEventListener('submit', handleChange)
 
-  // let handleSubmit = async event => {
-  //   event.preventDefault()
-  //   console.log(`${state.name} button handleSubmit`, event)
+  // el.innerHTML = '<h1>Settings</h1>'
+  let existingForm = el.querySelector(`form[name="${form.name}"]`)
 
-  //   if (state.address) {
-  //     await requestFunds(
-  //       state.address,
-  //       ''
-  //     )
-  //   }
-  // }
-
-  // form.addEventListener('submit', handleSubmit)
-
-  el.innerHTML = '<h1>Settings</h1>'
-  el.insertAdjacentElement('beforeend', form)
+  if (existingForm) {
+    existingForm.replaceWith(form)
+  } else {
+    el.insertAdjacentElement('beforeend', form)
+  }
 
   const currencies = await getCurrencies()
 
@@ -89,8 +83,7 @@ export async function setupFiatSelector(el, state = {}) {
     'beforeend',
     `${
       currencies.map(c => {
-        console.log('currency', c)
-        return `<option value="${c.symbol}">${c.quoteCurrency}</option>`
+        return `<option value="${c.quoteCurrency}"></option>`
       }).join('\n')
     }`
   )
