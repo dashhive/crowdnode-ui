@@ -10,6 +10,7 @@ import {
   getStoredKeys,
   storePhraseOrWif,
 } from '../../lib/storage.js'
+import setupBackupDialog from './backup.js'
 // import {
 //   // Secp256k1,
 //   // Base58Check,
@@ -124,7 +125,7 @@ export function setupAddWalletDialog(el, state = {}) {
 
   let handleClose = event => {
     event.preventDefault()
-    console.log('encrypt dialog handleClose', event)
+    // console.log('encrypt dialog handleClose', event)
     dialog?.removeEventListener('close', handleClose)
     // @ts-ignore
     event?.target?.remove()
@@ -137,7 +138,7 @@ export function setupAddWalletDialog(el, state = {}) {
   }
   let handleReset = event => {
     event.preventDefault()
-    console.log('encrypt dialog handleReset', event)
+    // console.log('encrypt dialog handleReset', event)
     addForm?.removeEventListener('close', handleReset)
     genForm?.removeEventListener('close', handleReset)
     dialog.close('cancel')
@@ -175,24 +176,20 @@ export function setupAddWalletDialog(el, state = {}) {
 
     trigger("set:pass", passphrase);
 
-    console.log('generateRecoveryPhrase', myKeys, storedKeys)
+    // console.log('generateRecoveryPhrase', myKeys, storedKeys)
 
     // @ts-ignore
     event.target.privateKey.value = ''
     dialog.close(`add__${address}`)
   }
-  let handleGenSubmit = async event => {
-    event.preventDefault()
+  let handleBackupModal = async event => {
+    // let returnValue = event?.target?.returnValue
 
-    // Generate the new Public & Private Keys
-    myKeys = await generateRecoveryPhrase()
-    let { address, wif, recoveryPhrase } = myKeys
-    let unstoredKeys = [address, recoveryPhrase || wif]
-
-    // Store new keys in localStorage
-    // @ts-ignore
-    await storePhraseOrWif(unstoredKeys, passphrase)
+    // if (returnValue && returnValue !== 'cancel') {
+    //   state.passphrase = returnValue
+    // }
     let storedKeys = await getStoredKeys(passphrase)
+
     await getAddrRows(
       $d.querySelector('#addressGrid'),
       storedKeys,
@@ -211,8 +208,33 @@ export function setupAddWalletDialog(el, state = {}) {
 
     trigger("set:pass", passphrase);
 
-    console.log('generateRecoveryPhrase', myKeys, storedKeys)
+    // console.log('generateRecoveryPhrase', myKeys, storedKeys)
     dialog.close('generate')
+  }
+  let handleGenSubmit = async event => {
+    event.preventDefault()
+
+    // Generate the new Public & Private Keys
+    myKeys = await generateRecoveryPhrase()
+    let { address, wif, recoveryPhrase } = myKeys
+    let unstoredKeys = [address, recoveryPhrase || wif]
+
+    // Store new keys in localStorage
+    // @ts-ignore
+    await storePhraseOrWif(unstoredKeys, passphrase)
+
+    let backupDialog = await setupBackupDialog(
+      document.querySelector("main"),
+      {
+        recoveryPhrase,
+        address,
+        passphrase
+      }
+    )
+
+    backupDialog.addEventListener('close', handleBackupModal)
+
+    backupDialog.showModal()
   }
 
   dialog.addEventListener('close', handleClose)

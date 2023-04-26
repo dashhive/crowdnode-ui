@@ -22,6 +22,7 @@ import {
 import setupEncryptDialog from './components/dialogs/encrypt.js'
 import setupAddWalletDialog from './components/dialogs/addwallet.js'
 import setupFiatSelector from './components/forms/fiat.js'
+import setupBackupSelector from './components/forms/backup.js'
 
 import defineFormatToDash, {
   init as ftdInit
@@ -118,6 +119,15 @@ export async function changeRoute(route) {
   }
 
   if (currentPage === PAGE_SETTINGS) {
+    setupBackupSelector(
+      $d.querySelector('#settings'),
+      {
+        // submitTxt: '📥',
+        // address: pub,
+        // phraseOrWif: priv,
+        // passphrase: state.passphrase
+      },
+    )
     setupFiatSelector(
       $d.querySelector('#settings'),
       {
