@@ -95,7 +95,7 @@ export function setupSignupDialog(el, state = {}) {
 
   let handleSetPass = event => {
     event.preventDefault()
-    console.log('signup dialog handleSetPass', event.detail)
+    // console.log('signup dialog handleSetPass', event.detail)
     state.passphrase = event.detail;
   }
 

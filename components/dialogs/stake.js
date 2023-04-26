@@ -79,7 +79,7 @@ export function setupStakeDialog(el, state = {}) {
 
   let handleSetPass = event => {
     event.preventDefault()
-    console.log('stake dialog handleSetPass', event.detail)
+    // console.log('stake dialog handleSetPass', event.detail)
     state.passphrase = event.detail;
   }
 

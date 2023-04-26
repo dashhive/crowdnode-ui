@@ -96,7 +96,7 @@ export function setupWithdrawDialog(el, state = {}) {
 
   let handleSetPass = event => {
     event.preventDefault()
-    console.log('unstake dialog handleSetPass', event.detail)
+    // console.log('unstake dialog handleSetPass', event.detail)
     state.passphrase = event.detail;
   }
 

@@ -66,7 +66,7 @@ export function setupQrDialog(el, state = {}) {
 
   let handleSetPass = event => {
     event.preventDefault()
-    console.log('qr dialog handleSetPass', event.detail)
+    // console.log('qr dialog handleSetPass', event.detail)
     state.passphrase = event.detail;
   }
 
