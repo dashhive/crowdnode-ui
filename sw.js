@@ -18,12 +18,14 @@ let fileCache = [
   'components/format-to-dash.js',
   'components/dialogs/addwallet.js',
   'components/dialogs/encrypt.js',
+  'components/dialogs/backup.js',
   'components/dialogs/qr.js',
   'components/dialogs/signup.js',
   'components/dialogs/stake.js',
   'components/dialogs/unstake.js',
   'components/dialogs/withdraw.js',
   'components/forms/add-private-key.js',
+  'components/forms/backup.js',
   'components/forms/deposit.js',
   'components/forms/signup.js',
   'components/forms/stake.js',
@@ -53,7 +55,7 @@ self.addEventListener('install', function (event) {
 
 self.addEventListener('fetch', function (event) {
 
-  if (event.request.url.includes('clean-cache')) {
+  if (event.request.url.includes('clear-cache')) {
     caches.delete(cacheName);
     // console.info(cacheName, 'Cache cleared')
   }
