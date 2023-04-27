@@ -128,7 +128,7 @@ export function setupSignupDialog(el, state = {}) {
       }
     )
 
-    console.log('storedKeys', storedKeys)
+    // console.log('storedKeys', storedKeys)
   }
 
   let handleReset = event => {

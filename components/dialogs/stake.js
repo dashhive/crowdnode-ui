@@ -111,7 +111,7 @@ export function setupStakeDialog(el, state = {}) {
       }
     )
 
-    console.log('storedKeys', storedKeys)
+    // console.log('storedKeys', storedKeys)
   }
 
   let handleReset = event => {

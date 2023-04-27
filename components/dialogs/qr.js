@@ -99,7 +99,7 @@ export function setupQrDialog(el, state = {}) {
         }
       )
 
-      console.log('storedKeys', storedKeys)
+      // console.log('storedKeys', storedKeys)
     } else {
       // Hack to kill WebSocket listener
       location.reload()
