@@ -28,7 +28,7 @@ export function setupBackupButton(el, state = {}) {
 
   form.innerHTML = `
     <fieldset class="inline">
-      <label for="${state.name}SubmitBtn">Backup Recovery Phrases &amp; Private Keys (WIFs)</label>
+      <label>Backup Recovery Phrases &amp; Private Keys (WIFs)</label>
       <button id="${state.name}SubmitBtn" type="submit" title="${state.submitAlt}">${state.submitTxt}</button>
     </fieldset>
   `
