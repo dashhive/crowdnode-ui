@@ -10,7 +10,7 @@ export class FormatToDash extends HTMLElement {
     const span = document.createElement('span');
 
     // <format-to-dash value="${walletFunds.balance}" />
-    span.setAttribute('title', val.toString())
+    span.setAttribute('title', `Ð ${val.toString()}`)
     span.textContent = fixedDASH(val, dec);
 
     // OR
