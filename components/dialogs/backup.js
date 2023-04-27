@@ -109,21 +109,33 @@ export async function setupBackupRecoveryPhraseDialog(el, state = {}) {
   form.innerHTML = `
     <fieldset>
       <h2>Backup Recovery Phrase</h2>
-    </fieldset>
 
-    ${
-      keysToBackup.map(([pub,recovery]) => `
-        <strong class="ta-left">${pub}</strong>
-        <fieldset class="inline auto-height m-b-5">
-          <div class="ta-left">${
-            recovery.split(' ')
-              .map(w => `<span class="tag">${w}</span>`)
-              .join(' ')
-          }</div>
-          <button class="copy" title="${state.copyAlt}">${state.copyTxt}</button>
-        </fieldset>
-      `).join('\n')
-    }
+      <center>
+        <p>Write your recovery phrase(s) down on a piece of paper or print it out.</p>
+        <p>Store it somewhere safe, like Scrooge McDuck's money bin.<br/>
+        (or a vault or safe if you don't have your own money bin)</p>
+      </center>
+
+      ${
+        keysToBackup.map(([pub,recovery]) => `
+          <section>
+            <strong>${pub}</strong>
+              <article>
+                <div class="ta-left">${
+                  recovery.split(' ')
+                    .map(w => `<span class="tag">${w}</span>`)
+                    .join(' ')
+                }</div>
+                <button class="copy" title="${state.copyAlt}">${state.copyTxt}</button>
+            </article>
+          </section>
+        `).join('\n')
+      }
+
+      <p>
+        <strong class="t-warn" style="text-transform:uppercase;">If you lose your recovery phrase(s), there are no other backups.</strong>
+      </p>
+    </fieldset>
 
     <fieldset class="inline">
       <button type="reset" value="cancel" alt="${state.cancelAlt}">

@@ -17,7 +17,7 @@
 
   --info: #0bf;
   --note: #888;
-  --warn: #fd0; /* warn */
+  --warn: #fa0; /* warn */
   --dang: #f55; /* danger */
   --succ: #5b5; /* success */
   --lite: #09c;
@@ -218,6 +218,13 @@ body {
   min-height: 100vh;
 }
 
+hr {
+  border: 0 solid var(--inpbd);
+  /* border: 0 solid var(--gridshd); */
+  border-bottom-width: 1px;
+  /* box-shadow: 0 0 0 1px var(--gridshd); */
+}
+
 nav {
   position: fixed;
   display: flex;
@@ -272,6 +279,7 @@ main > footer > h5 {
 nav > #home:hover, */
 nav > #home:target {
   right: 0;
+  z-index: 1;
 }
 
 nav > div {
@@ -532,6 +540,9 @@ form.modal fieldset.inline input[name="percent"] {
   border: 0 solid var(--inpbd);
   text-align: right;
 }
+form.field fieldset.inline input[type="search"] {
+  max-width: 66%;
+}
 
 form.field,
 form.btn {
@@ -694,6 +705,26 @@ svg {
 
 .fit-width {
   width: fit-content;
+}
+
+
+.t-info {
+  color: var(--info);
+}
+.t-note {
+  color: var(--note);
+}
+.t-warn {
+  color: var(--warn);
+}
+.t-dang {
+  color: var(--dang);
+}
+.t-succ {
+  color: var(--succ);
+}
+.t-lite {
+  color: var(--lite);
 }
 
 .tag {
@@ -920,6 +951,14 @@ dialog.responsive fieldset:last-child {
 dialog.responsive fieldset:last-child {
   padding: 0;
 }
+dialog.responsive fieldset:first-child section {
+  margin: 1rem 0;
+}
+dialog.responsive fieldset:first-child section article {
+  flex-direction: row;
+  display: flex;
+  align-items: flex-start;
+}
 
 dialog.responsive button[type="submit"] {
   flex: 1 1 auto;
@@ -1129,7 +1168,7 @@ section.page.active {
     max-width: 80%;
   }
   section > form {
-    max-width: initial;
+    max-width: 100%;
   }
   header {
     margin: 0 auto;

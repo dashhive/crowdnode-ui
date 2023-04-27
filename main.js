@@ -7,6 +7,7 @@ import {
   // displayBalances,
   // getCurrencies,
   updateFiatDisplay,
+  displayVersionInfo,
 } from './lib/ui.js'
 import {
   getStoredKeys,
@@ -14,6 +15,7 @@ import {
   // initEncryptedStore,
   checkCache,
   fiatCurrency,
+  jsonStore,
 } from './lib/storage.js'
 import {
   CrowdNode,
@@ -33,21 +35,11 @@ const $d = document;
 
 let locUrl = new URL(location.toString())
 let IS_PROD = location.pathname.includes('crowdnode-ui')
-// let rememberMe = JSON.parse(localStorage.getItem('remember'))
-// let store = rememberMe ? localStorage : sessionStorage
-// let selectedPrivateKey = store.getItem('selectedPrivateKey')
+let Settings = jsonStore(localStorage)
 let passphrase
 let currentPage
-// let encryptedStore
 
 let _privateKeys = []
-
-// const STOREAGE_SALT = 'tabasco hardship tricky blimp doctrine'
-// const SK = 'selectedKey'
-// const PK = 'privateKeys'
-// const PKIV = 'privateKeys_iv'
-// const KEY_PREFIX = 'dk__'
-// const ENCRYPT_IV = 'encryptage'
 
 const PAGE_ONBOARD = 'onboarding'
 const PAGE_DASH = 'dashboard'
@@ -57,9 +49,9 @@ const PAGE_SETTINGS = 'settings'
 
 export async function changeRoute(route) {
   if (route.includes('#!/')) {
-    currentPage = route?.slice(3) || 'onboarding'
+    currentPage = route?.slice(3) || PAGE_ONBOARD
   } else {
-    currentPage = 'onboarding'
+    currentPage = PAGE_ONBOARD
   }
   // console.log('URL LOC:', location, IS_PROD)
   // console.info('URL PAGE:', route, currentPage)
@@ -136,6 +128,10 @@ export async function changeRoute(route) {
         // phraseOrWif: priv,
         // passphrase: state.passphrase
       },
+    )
+    displayVersionInfo(
+      $d.querySelector('#settings'),
+      Settings
     )
   }
 }
@@ -221,6 +217,8 @@ export default async function main() {
     },
     false
   );
+
+  await changeRoute(location.hash)
 }
 
 // window.addEventListener('load', main)
