@@ -40,6 +40,7 @@ export async function setupFiatSelector(el, state = {}) {
         name="fiat-choice"
         list="fiat-currencies"
         value="${selectedFiat}"
+        placeholder="${selectedFiat}"
       >
       <!-- <button type="submit" title="${state.submitAlt}">${state.submitTxt}</button> -->
     </fieldset>
@@ -47,26 +48,27 @@ export async function setupFiatSelector(el, state = {}) {
 
   let handleChange = async event => {
     event.preventDefault()
-    console.log(`${state.name} select handleChange====`, event)
+    // console.log(`${state.name} select handleChange====`, event)
 
     let val = event?.target?.value || event?.target?.['fiat-choice']?.value
 
-    localStorage.setItem('selectedFiat', val)
-    selectedFiat = val
+    if (!['',null,undefined].includes(val)) {
+      localStorage.setItem('selectedFiat', val)
+      selectedFiat = val
 
-    console.log(`${state.name} select handleChange`, selectedFiat)
+      console.log(`${state.name} select handleChange`, selectedFiat)
 
-    localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(
-      document.querySelector('#navBalances'),
-      selectedFiat
-    )))
+      localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(
+        document.querySelector('#navBalances'),
+        selectedFiat
+      )))
+    }
   }
 
   form.querySelector('#fiat-choice')
     .addEventListener('change', handleChange)
   form.addEventListener('submit', handleChange)
 
-  // el.innerHTML = '<h1>Settings</h1>'
   let existingForm = el.querySelector(`form[name="${form.name}"]`)
 
   if (existingForm) {
