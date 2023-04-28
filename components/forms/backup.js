@@ -1,4 +1,6 @@
+import { isStoreEncrypted } from '../../lib/storage.js'
 import { isDecryptedPhraseOrWif } from '../../utils.js'
+
 
 import setupBackupDialog from '../dialogs/backup.js'
 import setupEncryptDialog from '../dialogs/encrypt.js'
@@ -47,8 +49,10 @@ export function setupBackupButton(el, state = {}) {
     }
 
     if (
-      state.passphrase ||
-      isDecryptedPhraseOrWif(state.phraseOrWif)
+      !isStoreEncrypted || (
+        state.passphrase ||
+        isDecryptedPhraseOrWif(state.phraseOrWif)
+      )
     ) {
       let backupDialog = await setupBackupDialog(
         document.querySelector("main"),
@@ -66,9 +70,11 @@ export function setupBackupButton(el, state = {}) {
     event.preventDefault()
     // console.log(`${state.name} button handleSubmit`, event)
 
-    if(
-      !state.passphrase &&
-      !isDecryptedPhraseOrWif(state.phraseOrWif)
+    if (
+      isStoreEncrypted && (
+        !state.passphrase ||
+        !isDecryptedPhraseOrWif(state.phraseOrWif)
+      )
     ) {
       let encryptDialog = await setupEncryptDialog(
         document.querySelector("main")
@@ -78,7 +84,7 @@ export function setupBackupButton(el, state = {}) {
 
       encryptDialog.showModal()
     } else {
-      await handleBackupModal()
+      await handleBackupModal(event)
     }
   }
 
