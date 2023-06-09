@@ -6,7 +6,7 @@
   "scope": "/crowdnode-ui/",
   "dir": "auto",
   "lang": "en-US",
-  "display": "minimal-ui",
+  "display": "standalone",
   "orientation": "portrait",
 	"background_color": "#eeeeee",
 	"theme_color": "#242424",
