@@ -44,7 +44,7 @@ export async function setupBackupRecoveryPhraseDialog(el, state = {}) {
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
 
-  form.name = `${state.name}CopyAddr`
+  form.name = `${state.name}Backup`
   form.method = 'dialog'
 
   let handleSetPass = event => {
