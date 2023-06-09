@@ -1010,6 +1010,25 @@ dialog svg {
   margin: auto;
 }
 
+dialog.responsive fieldset.nomargin {
+  margin: 0;
+}
+dialog.responsive fieldset.nomargintop {
+  margin-top: 0;
+}
+dialog.responsive fieldset.nomarginbottom {
+  margin-bottom: 0;
+}
+dialog.responsive fieldset.nopad {
+  padding: 0;
+}
+dialog.responsive fieldset.nopadtop {
+  padding-top: 0;
+}
+dialog.responsive fieldset.nopadbottom {
+  padding-bottom: 0;
+}
+
 section.page {
   display: none;
 }
@@ -1298,23 +1317,4 @@ section.page.active {
   .grid footer article div:nth-child(2) {
     justify-content: flex-end;
   }
-}
-
-dialog.responsive fieldset.nomargin {
-  margin: 0;
-}
-dialog.responsive fieldset.nomargintop {
-  margin-top: 0;
-}
-dialog.responsive fieldset.nomarginbottom {
-  margin-bottom: 0;
-}
-dialog.responsive fieldset.nopad {
-  padding: 0;
-}
-dialog.responsive fieldset.nopadtop {
-  padding-top: 0;
-}
-dialog.responsive fieldset.nopadbottom {
-  padding-bottom: 0;
 }
