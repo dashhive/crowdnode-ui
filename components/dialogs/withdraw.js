@@ -16,7 +16,8 @@ import {
 
 // @ts-ignore
 let dashsight = DashSight.create({
-  baseUrl: 'https://dashsight.dashincubator.dev',
+  baseUrl: 'https://insight.dash.org',
+  // baseUrl: 'https://dashsight.dashincubator.dev',
 });
 let dashApi = DashApi.create({ insightApi: dashsight });
 

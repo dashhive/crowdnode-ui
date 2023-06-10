@@ -144,11 +144,12 @@ export default async function main() {
 
   CrowdNode.init({
     // baseUrl: 'https://app.crowdnode.io',
-    // insightBaseUrl: 'https://insight.dash.org',
+    insightBaseUrl: 'https://insight.dash.org',
     baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
-    insightBaseUrl: 'https://insight.dash.org/insight-api',
+    // insightBaseUrl: 'https://insight.dash.org/insight-api',
     dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
-    dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
+    dashsightBaseUrl: 'https://insight.dash.org/insight-api',
+    // dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
 
   let { storedKeys } = await getStoredKeys(passphrase)
