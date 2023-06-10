@@ -2,7 +2,7 @@
   "name": "crowdnode-ui",
   "description": "a Graphical User Interface (GUI) for CrowdNode.js",
   "license": "MIT",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "keywords": [
     "crowdnode",
     "dash",
