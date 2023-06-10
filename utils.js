@@ -209,14 +209,18 @@ export function isDecryptedPhraseOrWif(phraseOrWIF) {
   )
 }
 
-export async function generateRecoveryPhrase(phraseOrWIF) {
+export async function generateRecoveryPhrase(
+  phraseOrWIF,
+  accountIndex = 0
+) {
   let recoveryPhraseArr = phraseOrWIF?.split(' ')
   let targetBitEntropy = 128;
   let secretSalt = ''; // "TREZOR";
   let recoveryPhrase
   let seed
   let wallet
-  let accountIndex = 0;
+  // let accountIndex = 0;
+  let addressIndex = 0;
   let account
   let use = DashHd.RECEIVE;
   let xkey
@@ -248,9 +252,9 @@ export async function generateRecoveryPhrase(phraseOrWIF) {
     wallet = await DashHd.fromSeed(seed);
     account = await wallet.deriveAccount(accountIndex);
     xkey = await account.deriveXKey(use);
-    xprv = await DashHd.toXPrv(xkey);
-    xpub = await DashHd.toXPub(xkey);
-    key = await xkey.deriveAddress(use);
+    // xprv = await DashHd.toXPrv(xkey);
+    // xpub = await DashHd.toXPub(xkey);
+    key = await xkey.deriveAddress(addressIndex);
     address = await DashHd.toAddr(key.publicKey);
   }
 
@@ -262,9 +266,9 @@ export async function generateRecoveryPhrase(phraseOrWIF) {
     wallet,
     account,
     xkey,
-    xprv,
-    xpub,
+    // xprv,
+    // xpub,
     wif,
-    address
+    address,
   }
 }

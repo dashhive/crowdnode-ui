@@ -157,7 +157,7 @@ export function setupAddWalletDialog(el, state = {}) {
     // Store new keys in localStorage
     // @ts-ignore
     await storePhraseOrWif(unstoredKeys, passphrase)
-    let storedKeys = await getStoredKeys(passphrase)
+    let { storedKeys } = await getStoredKeys(passphrase)
     await getAddrRows(
       $d.querySelector('#addressGrid'),
       storedKeys,
@@ -188,7 +188,7 @@ export function setupAddWalletDialog(el, state = {}) {
     // if (returnValue && returnValue !== 'cancel') {
     //   state.passphrase = returnValue
     // }
-    let storedKeys = await getStoredKeys(passphrase)
+    let { storedKeys } = await getStoredKeys(passphrase)
 
     await getAddrRows(
       $d.querySelector('#addressGrid'),

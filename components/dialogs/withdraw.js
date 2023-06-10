@@ -112,7 +112,7 @@ export function setupWithdrawDialog(el, state = {}) {
     // @ts-ignore
     event?.target?.remove()
 
-    let storedKeys = await getStoredKeys(state.passphrase)
+    let { storedKeys } = await getStoredKeys(state.passphrase)
     await getAddrRows(
       document.querySelector('#addressGrid'),
       storedKeys,

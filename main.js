@@ -23,6 +23,7 @@ import {
 
 import setupEncryptDialog from './components/dialogs/encrypt.js'
 import setupAddWalletDialog from './components/dialogs/addwallet.js'
+import setupGenerateAddressDialog from './components/dialogs/address.js'
 import setupFiatSelector from './components/forms/fiat.js'
 import setupBackupSelector from './components/forms/backup.js'
 
@@ -150,7 +151,8 @@ export default async function main() {
     dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
 
-  _privateKeys = await getStoredKeys(passphrase)
+  let { storedKeys } = await getStoredKeys(passphrase)
+  _privateKeys = storedKeys
 
   if (_privateKeys.length === 0) {
     let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
@@ -175,9 +177,19 @@ export default async function main() {
     .addEventListener('click', async event => {
       event.preventDefault()
 
-      let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+      let { storedKeys } = await getStoredKeys(passphrase)
+      _privateKeys = storedKeys
 
-      addWalletDialog.showModal()
+      if (_privateKeys.length === 0) {
+        let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+
+        addWalletDialog.showModal()
+      } else {
+        let genAddrDialog = setupGenerateAddressDialog($d.querySelector("main"))
+
+        genAddrDialog.showModal()
+      }
+      // setupGenerateAddressDialog
     })
 
   localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(

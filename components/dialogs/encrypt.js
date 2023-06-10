@@ -140,7 +140,7 @@ export async function setupEncryptDialog(el, state = {}) {
     // @ts-ignore
     passphrase = event.target.passphrase?.value
 
-    const storedKeys = await getStoredKeys()
+    const { storedKeys } = await getStoredKeys()
 
     if (passphrase) {
       // console.log('passphrase', passphrase)
