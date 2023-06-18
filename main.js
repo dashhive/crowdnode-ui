@@ -1,5 +1,6 @@
 import {
   trigger,
+  isDecryptedPhraseOrWif,
 } from './utils.js'
 import {
   getAddrRows,
@@ -174,6 +175,17 @@ export default async function main() {
       encryptDialog.showModal()
     })
 
+  function handleAddAddress(event) {
+    let genAddrDialog = setupGenerateAddressDialog(
+      $d.querySelector("main"),
+      {
+        passphrase: event?.target?.returnValue || passphrase,
+      }
+    )
+
+    genAddrDialog.showModal()
+  }
+
   $d.querySelector('nav .addwallet')
     .addEventListener('click', async event => {
       event.preventDefault()
@@ -186,11 +198,20 @@ export default async function main() {
 
         addWalletDialog.showModal()
       } else {
-        let genAddrDialog = setupGenerateAddressDialog($d.querySelector("main"))
+        let [,firstRecoveryPhrase] = storedKeys[0]
+        if(
+          !passphrase &&
+          !isDecryptedPhraseOrWif(firstRecoveryPhrase)
+        ) {
+          let encryptDialog = await setupEncryptDialog($d.querySelector("main"))
 
-        genAddrDialog.showModal()
+          encryptDialog.addEventListener('close', handleAddAddress)
+
+          encryptDialog.showModal()
+        } else {
+          handleAddAddress()
+        }
       }
-      // setupGenerateAddressDialog
     })
 
   localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(

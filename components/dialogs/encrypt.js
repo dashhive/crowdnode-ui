@@ -153,7 +153,10 @@ export async function setupEncryptDialog(el, state = {}) {
 
       encryptedStore = await initEncryptedStore(passphrase)
 
-      let decryptedStoredKeys = await getStoredKeys(passphrase)
+      let { storedKeys: decryptedKeys } = await getStoredKeys(passphrase)
+      let decryptedStoredKeys = decryptedKeys
+
+      console.log('decryptedStoredKeys', decryptedStoredKeys)
 
       let decryptSuccess = false
 
@@ -189,7 +192,8 @@ export async function setupEncryptDialog(el, state = {}) {
       if (!isStoreEncrypted || decryptSuccess) {
         await encryptKeys(storedKeys, passphrase)
 
-        decryptedStoredKeys = await getStoredKeys(passphrase)
+        let { storedKeys: decryptedKeys } = await getStoredKeys(passphrase)
+        decryptedStoredKeys = decryptedKeys
         // event.target.querySelector('button[type="submit"]').disabled = false
         // $d.privKeyForm.querySelector('button').disabled = false
 

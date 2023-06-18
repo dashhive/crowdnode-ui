@@ -78,12 +78,17 @@ export function setupGenerateAddressDialog(el, state = {}) {
   let handleGenSubmit = async event => {
     event.preventDefault()
 
+    let { storedKeys } = await getStoredKeys(state.passphrase)
+
     // @ts-ignore
     const rpId = `${KEY_PREFIX}0`
     // const privateKey = event.target.privateKey?.value?.trim()
     let accts = JSON.parse(await store.getItem(`accounts`))
     // let addrs = JSON.parse(await store.getItem(`addresses`))
-    const privateKey = await store.getItem(rpId)
+    // const privateKey = await store.getItem(rpId)
+    const [_addr,privateKey,] = storedKeys.find(
+      ([_addr, _recPhrase, storeKey]) => storeKey === rpId
+    )
     const nextAccountIndex = accts[rpId].length
 
     // Generate the new Public & Private Keys
@@ -99,6 +104,12 @@ export function setupGenerateAddressDialog(el, state = {}) {
       nextAccountIndex,
     ]
 
+    // Store new keys in localStorage
+    // @ts-ignore
+    await storePhraseOrWif(unstoredKeys, state.passphrase)
+
+    let latestKeys = await getStoredKeys(state.passphrase)
+
     // let accts = JSON.parse(localStorage.accounts)
     // let addrs = JSON.parse(localStorage.addresses)
     // let addr = 'XoorotBW6ApopHBLR9vkMZfztPAoNFwr6f'
@@ -111,29 +122,24 @@ export function setupGenerateAddressDialog(el, state = {}) {
     // key = await xkey.deriveAddress(addressIndex);
     // address = await DashHd.toAddr(key.publicKey);
 
-    // Store new keys in localStorage
-    // @ts-ignore
-    await storePhraseOrWif(unstoredKeys, passphrase)
-
-    let { storedKeys } = await getStoredKeys(passphrase)
-
     await getAddrRows(
       $d.querySelector('#addressGrid'),
-      storedKeys,
+      latestKeys.storedKeys,
       {
-        status: () => trigger("set:pass", passphrase)
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
       }
     )
     await getStakeRows(
       $d.querySelector('#stakingGrid'),
-      storedKeys,
+      latestKeys.storedKeys,
       {
-        status: () => trigger("set:pass", passphrase),
-        passphrase
+        status: () => trigger("set:pass", state.passphrase),
+        passphrase: state.passphrase
       }
     )
 
-    trigger("set:pass", passphrase);
+    trigger("set:pass", state.passphrase);
 
     // console.log('generateRecoveryPhrase', myKeys, storedKeys)
 
@@ -142,10 +148,18 @@ export function setupGenerateAddressDialog(el, state = {}) {
     dialog.close(`add__${address}`)
   }
 
+  let handleSetPass = event => {
+    event.preventDefault()
+    // console.log('address dialog handleSetPass', event.detail)
+    state.passphrase = event.detail;
+  }
+
   dialog.addEventListener('close', handleClose)
 
   genForm.addEventListener('reset', handleReset)
   genForm.addEventListener('submit', handleGenSubmit)
+
+  window.addEventListener('set:pass', handleSetPass) //,  { once: true }
 
   dialog.insertAdjacentElement('beforeend', genForm)
 
