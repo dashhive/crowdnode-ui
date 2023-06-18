@@ -175,15 +175,17 @@ export default async function main() {
       encryptDialog.showModal()
     })
 
-  function handleAddAddress(event) {
-    let genAddrDialog = setupGenerateAddressDialog(
-      $d.querySelector("main"),
-      {
-        passphrase: event?.target?.returnValue || passphrase,
-      }
-    )
+  async function handleAddAddress(event) {
+    if (event?.target?.returnValue !== 'cancel') {
+      let genAddrDialog = await setupGenerateAddressDialog(
+        $d.querySelector("main"),
+        {
+          passphrase: event?.target?.returnValue || passphrase,
+        }
+      )
 
-    genAddrDialog.showModal()
+      genAddrDialog.showModal()
+    }
   }
 
   $d.querySelector('nav .addwallet')
@@ -209,7 +211,7 @@ export default async function main() {
 
           encryptDialog.showModal()
         } else {
-          handleAddAddress()
+          await handleAddAddress()
         }
       }
     })
