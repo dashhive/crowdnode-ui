@@ -157,7 +157,7 @@ export default async function main() {
   _privateKeys = storedKeys
 
   if (_privateKeys.length === 0) {
-    let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+    let addWalletDialog = await setupAddWalletDialog($d.querySelector("main"))
 
     addWalletDialog.showModal()
   }
@@ -196,7 +196,7 @@ export default async function main() {
       _privateKeys = storedKeys
 
       if (_privateKeys.length === 0) {
-        let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+        let addWalletDialog = await setupAddWalletDialog($d.querySelector("main"))
 
         addWalletDialog.showModal()
       } else {

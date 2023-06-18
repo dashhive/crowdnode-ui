@@ -81,71 +81,80 @@ export function setupGenerateAddressDialog(el, state = {}) {
     let { storedKeys } = await getStoredKeys(state.passphrase)
 
     // @ts-ignore
-    const rpId = `${KEY_PREFIX}0`
+    // const rpId = `${KEY_PREFIX}0`
+
+    let phraseKey = Object.keys(store)
+      .find(k => k.startsWith(KEY_PREFIX))
+    // console.log('============ handleGenSubmit phraseKey', phraseKey)
+
     // const privateKey = event.target.privateKey?.value?.trim()
     let accts = JSON.parse(await store.getItem(`accounts`))
     // let addrs = JSON.parse(await store.getItem(`addresses`))
-    // const privateKey = await store.getItem(rpId)
-    const [_addr,privateKey,] = storedKeys.find(
-      ([_addr, _recPhrase, storeKey]) => storeKey === rpId
-    )
-    const nextAccountIndex = accts[rpId].length
+    // const privateKey = await store.getItem(phraseKey)
+    console.log('########### handleGenSubmit', storedKeys, phraseKey, accts)
+    if (storedKeys.length > 0) {
+      const [ _addr, privateKey, ] = storedKeys.find(
+        ([_addr, _recPhrase, storeKey]) => storeKey === phraseKey
+      )
+      const nextAccountIndex = accts[phraseKey].length
 
-    // Generate the new Public & Private Keys
-    myKeys = await generateRecoveryPhrase(
-      privateKey,
-      nextAccountIndex,
-    )
-    let { address, wif, recoveryPhrase, } = myKeys
-    let unstoredKeys = [
-      address,
-      recoveryPhrase || wif,
-      rpId,
-      nextAccountIndex,
-    ]
+      // Generate the new Public & Private Keys
+      myKeys = await generateRecoveryPhrase(
+        privateKey,
+        nextAccountIndex,
+      )
+      let { address, wif, recoveryPhrase, } = myKeys
+      let unstoredKeys = [
+        address,
+        recoveryPhrase || wif,
+        phraseKey,
+        nextAccountIndex,
+      ]
 
-    // Store new keys in localStorage
-    // @ts-ignore
-    await storePhraseOrWif(unstoredKeys, state.passphrase)
+      // Store new keys in localStorage
+      // @ts-ignore
+      await storePhraseOrWif(unstoredKeys, state.passphrase)
 
-    let latestKeys = await getStoredKeys(state.passphrase)
+      let latestKeys = await getStoredKeys(state.passphrase)
 
-    // let accts = JSON.parse(localStorage.accounts)
-    // let addrs = JSON.parse(localStorage.addresses)
-    // let addr = 'XoorotBW6ApopHBLR9vkMZfztPAoNFwr6f'
-    // let targetPhrase = addrs[addr]
+      // let accts = JSON.parse(localStorage.accounts)
+      // let addrs = JSON.parse(localStorage.addresses)
+      // let addr = 'XoorotBW6ApopHBLR9vkMZfztPAoNFwr6f'
+      // let targetPhrase = addrs[addr]
 
-    // accts[targetPhrase].findIndex(v => v === addr)
+      // accts[targetPhrase].findIndex(v => v === addr)
 
-    // account = await wallet.deriveAccount(nextAccountIndex);
-    // xkey = await account.deriveXKey(DashHd.RECEIVE);
-    // key = await xkey.deriveAddress(addressIndex);
-    // address = await DashHd.toAddr(key.publicKey);
+      // account = await wallet.deriveAccount(nextAccountIndex);
+      // xkey = await account.deriveXKey(DashHd.RECEIVE);
+      // key = await xkey.deriveAddress(addressIndex);
+      // address = await DashHd.toAddr(key.publicKey);
 
-    await getAddrRows(
-      $d.querySelector('#addressGrid'),
-      latestKeys.storedKeys,
-      {
-        status: () => trigger("set:pass", state.passphrase),
-        passphrase: state.passphrase
-      }
-    )
-    await getStakeRows(
-      $d.querySelector('#stakingGrid'),
-      latestKeys.storedKeys,
-      {
-        status: () => trigger("set:pass", state.passphrase),
-        passphrase: state.passphrase
-      }
-    )
+      await getAddrRows(
+        $d.querySelector('#addressGrid'),
+        latestKeys.storedKeys,
+        {
+          status: () => trigger("set:pass", state.passphrase),
+          passphrase: state.passphrase
+        }
+      )
+      await getStakeRows(
+        $d.querySelector('#stakingGrid'),
+        latestKeys.storedKeys,
+        {
+          status: () => trigger("set:pass", state.passphrase),
+          passphrase: state.passphrase
+        }
+      )
 
-    trigger("set:pass", state.passphrase);
+      trigger("set:pass", state.passphrase);
 
-    // console.log('generateRecoveryPhrase', myKeys, storedKeys)
+      // console.log('generateRecoveryPhrase', myKeys, storedKeys)
 
-    // @ts-ignore
-    // event.target.privateKey.value = ''
-    dialog.close(`add__${address}`)
+      // @ts-ignore
+      // event.target.privateKey.value = ''
+      return dialog.close(`add__${address}`)
+    }
+    dialog.close(`fail_add_address`)
   }
 
   let handleSetPass = event => {
