@@ -27,6 +27,8 @@ import setupAddWalletDialog from './components/dialogs/addwallet.js'
 import setupGenerateAddressDialog from './components/dialogs/address.js'
 import setupFiatSelector from './components/forms/fiat.js'
 import setupBackupSelector from './components/forms/backup.js'
+import setupWalletButton from './components/forms/wallet.js'
+
 
 import defineFormatToDash, {
   init as ftdInit
@@ -113,6 +115,10 @@ export async function changeRoute(route) {
   }
 
   if (currentPage === PAGE_SETTINGS) {
+    setupWalletButton(
+      $d.querySelector('#settings'),
+      {}
+    )
     setupBackupSelector(
       $d.querySelector('#settings'),
       {
