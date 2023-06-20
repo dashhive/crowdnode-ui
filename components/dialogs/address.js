@@ -5,6 +5,7 @@ import {
 import {
   getAddrRows,
   getStakeRows,
+  formatWalletName,
 } from '../../lib/ui.js'
 import {
   getStoredKeys,
@@ -28,11 +29,14 @@ const initialState = {
   cancelGenAlt: 'Cancel Generate Address',
 }
 
-export function setupGenerateAddressDialog(el, state = {}) {
+export async function setupGenerateAddressDialog(el, state = {}) {
   state = {
     ...initialState,
     ...state,
   }
+
+  let wallets = Object.keys(store)
+    .filter(k => k.startsWith(KEY_PREFIX))
 
   const dialog = document.createElement('dialog')
   const genForm = document.createElement('form')
@@ -45,11 +49,24 @@ export function setupGenerateAddressDialog(el, state = {}) {
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
 
+  console.log('setupGenerateAddressDialog wallets', wallets)
+
+  let selectWallet = `<select name="wallet" class="ta-left p-x-4">${
+    wallets.map((walletName) =>
+      `<option value="${walletName}">${formatWalletName(walletName)}</option>`
+    ).join('\n')
+  }</select>`
+
   genForm.setAttribute('name', `${state.name}GenForm`)
 
   genForm.innerHTML = `
     <fieldset>
       <h2>Generate a New Address</h2>
+      <label for="wallet">
+        Wallet
+      </label>
+      ${selectWallet}
+      <br/>
       <button type="submit" title="${state.submitGenAlt}">
         <span>${state.submitGenTxt}</span>
       </button>
@@ -83,11 +100,12 @@ export function setupGenerateAddressDialog(el, state = {}) {
     // @ts-ignore
     // const rpId = `${KEY_PREFIX}0`
 
-    let phraseKey = Object.keys(store)
-      .find(k => k.startsWith(KEY_PREFIX))
+    const phraseKey = event.target.wallet?.value
+    console.log('============ phraseKey', phraseKey)
+    // let phraseKey = Object.keys(store)
+    //   .find(k => k.startsWith(KEY_PREFIX))
     // console.log('============ handleGenSubmit phraseKey', phraseKey)
 
-    // const privateKey = event.target.privateKey?.value?.trim()
     let accts = JSON.parse(await store.getItem(`accounts`))
     // let addrs = JSON.parse(await store.getItem(`addresses`))
     // const privateKey = await store.getItem(phraseKey)
