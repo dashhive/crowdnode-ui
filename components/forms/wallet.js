@@ -1,26 +1,26 @@
 import { isStoreEncrypted } from '../../lib/storage.js'
 import { isDecryptedPhraseOrWif } from '../../utils.js'
 
-
-import setupBackupDialog from '../dialogs/backup.js'
-import setupEncryptDialog from '../dialogs/encrypt.js'
+// import setupBackupDialog from '../dialogs/backup.js'
+// import setupEncryptDialog from '../dialogs/encrypt.js'
+import setupAddWalletDialog from '../dialogs/addwallet.js'
 
 const initialState = {
   id: 'Button',
-  name: 'backup',
-  submitTxt: 'Backup',
-  submitAlt: 'Backup Recovery Phrase',
+  name: 'wallet',
+  submitTxt: 'Add / Generate',
+  submitAlt: 'Add or Generate a new Wallet',
   cancelTxt: 'Cancel',
-  cancelAlt: 'Cancel Backup',
+  cancelAlt: 'Cancel Generate Wallet',
 }
 
-export function setupBackupButton(el, state = {}) {
+export function setupWalletButton(el, state = {}) {
   state = {
     ...initialState,
     ...state,
   }
 
-  // console.log('setupBackupButton state', state)
+  // console.log('setupWalletButton state', state)
 
   const form = document.createElement('form')
 
@@ -30,12 +30,12 @@ export function setupBackupButton(el, state = {}) {
 
   form.innerHTML = `
     <fieldset class="inline">
-      <label>Backup Recovery Phrases &amp; Private Keys (WIFs)</label>
+      <label>Add or Generate a wallet</label>
       <button id="${state.name}SubmitBtn" type="submit" title="${state.submitAlt}">${state.submitTxt}</button>
     </fieldset>
   `
 
-  let handleBackupModal = async event => {
+  let handleWalletModal = async event => {
     let returnValue = event?.target?.returnValue
 
     // console.log(
@@ -70,22 +70,29 @@ export function setupBackupButton(el, state = {}) {
     event.preventDefault()
     // console.log(`${state.name} button handleSubmit`, event)
 
-    if (
-      isStoreEncrypted() && (
-        !state.passphrase ||
-        !isDecryptedPhraseOrWif(state.phraseOrWif)
-      )
-    ) {
-      let encryptDialog = await setupEncryptDialog(
-        document.querySelector("main")
-      )
+    let addWalletDialog = await setupAddWalletDialog(
+      document.querySelector("main")
+    )
 
-      encryptDialog.addEventListener('close', handleBackupModal)
+    // addWalletDialog.addEventListener('close', handleWalletModal)
 
-      encryptDialog.showModal()
-    } else {
-      await handleBackupModal(event)
-    }
+    addWalletDialog.showModal()
+    // if (
+    //   isStoreEncrypted() && (
+    //     !state.passphrase ||
+    //     !isDecryptedPhraseOrWif(state.phraseOrWif)
+    //   )
+    // ) {
+    //   let encryptDialog = await setupEncryptDialog(
+    //     document.querySelector("main")
+    //   )
+
+    //   encryptDialog.addEventListener('close', handleWalletModal)
+
+    //   encryptDialog.showModal()
+    // } else {
+    //   await handleWalletModal(event)
+    // }
   }
 
   form.addEventListener('submit', handleSubmit)
@@ -103,4 +110,4 @@ export function setupBackupButton(el, state = {}) {
   return form
 }
 
-export default setupBackupButton
+export default setupWalletButton

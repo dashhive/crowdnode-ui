@@ -31,7 +31,7 @@ export async function setupBackupRecoveryPhraseDialog(el, state = {}) {
 
   // console.log('backup dialog state', state)
 
-  let storedKeys = await getStoredKeys(state.passphrase)
+  let { storedKeys } = await getStoredKeys(state.passphrase)
 
   const dialog = document.createElement('dialog')
   const form = document.createElement('form')
@@ -84,7 +84,10 @@ export async function setupBackupRecoveryPhraseDialog(el, state = {}) {
 
       // console.log('storedKeys', storedKeys)
     } else {
-      storedKeys = await getStoredKeys(state.passphrase)
+      let {
+        storedKeys: skeys
+      } = await getStoredKeys(state.passphrase)
+      storedKeys = skeys
     }
     //  else {
     //   location.reload()

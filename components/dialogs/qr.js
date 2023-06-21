@@ -80,7 +80,7 @@ export function setupQrDialog(el, state = {}) {
     event?.target?.remove()
 
     if (dialog.returnValue !== 'cancel') {
-      let storedKeys = await getStoredKeys(state.passphrase)
+      let { storedKeys } = await getStoredKeys(state.passphrase)
 
       await getAddrRows(
         document.querySelector('#addressGrid'),

@@ -1,5 +1,6 @@
 import {
   trigger,
+  isDecryptedPhraseOrWif,
 } from './utils.js'
 import {
   getAddrRows,
@@ -23,8 +24,11 @@ import {
 
 import setupEncryptDialog from './components/dialogs/encrypt.js'
 import setupAddWalletDialog from './components/dialogs/addwallet.js'
+import setupGenerateAddressDialog from './components/dialogs/address.js'
 import setupFiatSelector from './components/forms/fiat.js'
 import setupBackupSelector from './components/forms/backup.js'
+import setupWalletButton from './components/forms/wallet.js'
+
 
 import defineFormatToDash, {
   init as ftdInit
@@ -111,6 +115,10 @@ export async function changeRoute(route) {
   }
 
   if (currentPage === PAGE_SETTINGS) {
+    setupWalletButton(
+      $d.querySelector('#settings'),
+      {}
+    )
     setupBackupSelector(
       $d.querySelector('#settings'),
       {
@@ -143,17 +151,19 @@ export default async function main() {
 
   CrowdNode.init({
     // baseUrl: 'https://app.crowdnode.io',
-    // insightBaseUrl: 'https://insight.dash.org',
+    insightBaseUrl: 'https://insight.dash.org',
     baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
-    insightBaseUrl: 'https://insight.dash.org/insight-api',
+    // insightBaseUrl: 'https://insight.dash.org/insight-api',
     dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
-    dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
+    dashsightBaseUrl: 'https://insight.dash.org/insight-api',
+    // dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
 
-  _privateKeys = await getStoredKeys(passphrase)
+  let { storedKeys } = await getStoredKeys(passphrase)
+  _privateKeys = storedKeys
 
   if (_privateKeys.length === 0) {
-    let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+    let addWalletDialog = await setupAddWalletDialog($d.querySelector("main"))
 
     addWalletDialog.showModal()
   }
@@ -171,13 +181,45 @@ export default async function main() {
       encryptDialog.showModal()
     })
 
+  async function handleAddAddress(event) {
+    if (event?.target?.returnValue !== 'cancel') {
+      let genAddrDialog = await setupGenerateAddressDialog(
+        $d.querySelector("main"),
+        {
+          passphrase: event?.target?.returnValue || passphrase,
+        }
+      )
+
+      genAddrDialog.showModal()
+    }
+  }
+
   $d.querySelector('nav .addwallet')
     .addEventListener('click', async event => {
       event.preventDefault()
 
-      let addWalletDialog = setupAddWalletDialog($d.querySelector("main"))
+      let { storedKeys } = await getStoredKeys(passphrase)
+      _privateKeys = storedKeys
 
-      addWalletDialog.showModal()
+      if (_privateKeys.length === 0) {
+        let addWalletDialog = await setupAddWalletDialog($d.querySelector("main"))
+
+        addWalletDialog.showModal()
+      } else {
+        let [,firstRecoveryPhrase] = storedKeys[0]
+        if(
+          !passphrase &&
+          !isDecryptedPhraseOrWif(firstRecoveryPhrase)
+        ) {
+          let encryptDialog = await setupEncryptDialog($d.querySelector("main"))
+
+          encryptDialog.addEventListener('close', handleAddAddress)
+
+          encryptDialog.showModal()
+        } else {
+          await handleAddAddress()
+        }
+      }
     })
 
   localStorage.setItem('fiat', JSON.stringify(await updateFiatDisplay(
