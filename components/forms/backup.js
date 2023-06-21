@@ -49,7 +49,7 @@ export function setupBackupButton(el, state = {}) {
     }
 
     if (
-      !isStoreEncrypted || (
+      !isStoreEncrypted() || (
         state.passphrase ||
         isDecryptedPhraseOrWif(state.phraseOrWif)
       )
@@ -71,7 +71,7 @@ export function setupBackupButton(el, state = {}) {
     // console.log(`${state.name} button handleSubmit`, event)
 
     if (
-      isStoreEncrypted && (
+      isStoreEncrypted() && (
         !state.passphrase ||
         !isDecryptedPhraseOrWif(state.phraseOrWif)
       )

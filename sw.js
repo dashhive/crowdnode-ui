@@ -8,7 +8,6 @@ let fileCache = [
   'index.css',
   'main.js',
   'sw.js',
-  'CryptStore.js',
   'imports.js',
   'qr.js',
   'types.js',
@@ -44,6 +43,7 @@ let fileCache = [
   'node_modules/@dashincubator/secp256k1/secp256k1.js',
   'node_modules/@dashincubator/base58check/base58check.js',
   'node_modules/@dashincubator/ripemd160/ripemd160.js',
+  'node_modules/crypticstorage/crypticstorage.js',
 ];
 
 self.addEventListener('install', function (event) {
