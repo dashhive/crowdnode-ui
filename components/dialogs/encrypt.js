@@ -6,11 +6,10 @@ import {
   getStakeRows,
 } from '../../lib/ui.js'
 import {
+  isStoreEncrypted,
   getStoredKeys,
   initEncryptedStore,
   encryptKeys,
-  store,
-  ENCRYPT_IV,
 } from '../../lib/storage.js'
 // import {
 //   // Secp256k1,
@@ -37,9 +36,7 @@ let encryptedStore
 let passphrase
 
 export async function setupEncryptDialog(el, state = {}) {
-  const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
-
-  let cryptDirection = isStoreEncrypted ? 'decrypt' : 'encrypt'
+  let cryptDirection = isStoreEncrypted() ? 'decrypt' : 'encrypt'
   let capCryptDir = `${capitalizeFirstLetter(cryptDirection)}`
   let title = `${capCryptDir} Wallet`
 
@@ -189,7 +186,7 @@ export async function setupEncryptDialog(el, state = {}) {
 
       trigger("set:pass", passphrase);
 
-      if (!isStoreEncrypted || decryptSuccess) {
+      if (!isStoreEncrypted() || decryptSuccess) {
         await encryptKeys(storedKeys, passphrase)
 
         let { storedKeys: decryptedKeys } = await getStoredKeys(passphrase)
@@ -213,7 +210,7 @@ export async function setupEncryptDialog(el, state = {}) {
         storedKeys,
         encryptedStore,
         decryptedStoredKeys,
-        isStoreEncrypted,
+        isStoreEncrypted: isStoreEncrypted(),
         dl: decryptedStoredKeys.length,
         el: storedKeys.length,
       })

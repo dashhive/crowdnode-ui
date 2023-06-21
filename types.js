@@ -5,9 +5,8 @@
  * @typedef {Object} Encryptage
  * @property {EncryptageEncrypt} encrypt
  * @property {EncryptageDecrypt} decrypt
- * @property {BaseICrypto["getIv"]} getInitVector
+ * @property {ArrayBuffer} getInitVector
  *
- * @typedef {BaseICrypto & Encryptage} EncryptageB
  * @typedef {(message: string, iv: string | ArrayBufferLike) => Promise<string>} EncryptageEncrypt
  * @typedef {(ciphertext: string, iv: string | ArrayBufferLike) => Promise<string>} EncryptageDecrypt
  *

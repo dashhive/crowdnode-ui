@@ -49,7 +49,7 @@ export function setupWalletButton(el, state = {}) {
     }
 
     if (
-      !isStoreEncrypted || (
+      !isStoreEncrypted() || (
         state.passphrase ||
         isDecryptedPhraseOrWif(state.phraseOrWif)
       )
@@ -78,7 +78,7 @@ export function setupWalletButton(el, state = {}) {
 
     addWalletDialog.showModal()
     // if (
-    //   isStoreEncrypted && (
+    //   isStoreEncrypted() && (
     //     !state.passphrase ||
     //     !isDecryptedPhraseOrWif(state.phraseOrWif)
     //   )
