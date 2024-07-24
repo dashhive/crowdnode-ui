@@ -295,18 +295,25 @@
     }
   })('nav a.theme')
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-      .register(`sw.js`)
-      .then(function () {
-        console.log("Service Worker Registered");
-      });
-  }
+  // if ('serviceWorker' in navigator) {
+  //   navigator.serviceWorker
+  //     .register(`sw.js`)
+  //     .then(function () {
+  //       console.log("Service Worker Registered");
+  //     });
+  // }
 </script>
-<script src="./node_modules/@dashevo/dashcore-lib/dist/dashcore-lib.min.js"></script>
+<!-- <script src="./node_modules/@dashevo/dashcore-lib/dist/dashcore-lib.min.js"></script> -->
 <script src="./node_modules/@root/request/urequest.js"></script>
 <script src="./node_modules/qrcode-svg/dist/qrcode.min.js"></script>
 <!-- <script src="./pwa-install.js"></script> -->
+<script type="importmap">
+  {
+    "imports": {
+      "crypto": "./webcrypto.js"
+    }
+  }
+</script>
 <script src="./main.js" type="module" async defer></script>
 </body>
 </html>
