@@ -1,14 +1,7 @@
 /**
- * @typedef {import("@plamikcho/pbcrypto").ICrypto} BaseICrypto
+ * @typedef {import("./node_modules/crypticstorage/cryptic.js").Cryptic} Cryptic
+ * @typedef {import("./node_modules/crypticstorage/storage.js").CrypticStorage} CrypticStorage
  * @typedef {Window & import("@dashincubator/base58check/base58check.js")}
- *
- * @typedef {Object} Encryptage
- * @property {EncryptageEncrypt} encrypt
- * @property {EncryptageDecrypt} decrypt
- * @property {ArrayBuffer} getInitVector
- *
- * @typedef {(message: string, iv: string | ArrayBufferLike) => Promise<string>} EncryptageEncrypt
- * @typedef {(ciphertext: string, iv: string | ArrayBufferLike) => Promise<string>} EncryptageDecrypt
  *
  * @typedef {{
  *  foo?: boolean;

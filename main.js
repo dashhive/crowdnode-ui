@@ -150,13 +150,10 @@ export default async function main() {
   defineFormatToDash()
 
   CrowdNode.init({
-    // baseUrl: 'https://app.crowdnode.io',
+    baseUrl: 'https://wallet.dashincubator.dev/api/cors/app.crowdnode.io',
     insightBaseUrl: 'https://insight.dash.org',
-    baseUrl: 'https://dashnode.duckdns.org/api/cors/app.crowdnode.io',
-    // insightBaseUrl: 'https://insight.dash.org/insight-api',
     dashsocketBaseUrl: 'https://insight.dash.org/socket.io',
     dashsightBaseUrl: 'https://insight.dash.org/insight-api',
-    // dashsightBaseUrl: 'https://dashsight.dashincubator.dev/insight-api',
   })
 
   let { storedKeys } = await getStoredKeys(passphrase)
