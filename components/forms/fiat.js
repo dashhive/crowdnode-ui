@@ -10,7 +10,7 @@ let selectedFiat = fiatCurrency
 
 const initialState = {
   id: 'Button',
-  name: 'deposit',
+  name: 'fiat',
   submitTxt: 'Change Fiat Currency',
   submitAlt: 'Fiat Currency',
   cancelTxt: 'Cancel',

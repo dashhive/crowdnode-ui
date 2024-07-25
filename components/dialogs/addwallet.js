@@ -1,4 +1,7 @@
 import {
+  DashPhrase,
+} from '../../imports.js'
+import {
   trigger,
   generateRecoveryPhrase,
 } from '../../utils.js'
@@ -9,6 +12,8 @@ import {
 import {
   getStoredKeys,
   storePhraseOrWif,
+  store,
+  KEY_PREFIX,
 } from '../../lib/storage.js'
 import setupBackupDialog from './backup.js'
 // import {
@@ -44,7 +49,7 @@ const initialState = {
   cancelGenAlt: 'Cancel Generate Wallet',
 }
 
-export function setupAddWalletDialog(el, state = {}) {
+export async function setupAddWalletDialog(el, state = {}) {
   state = {
     ...initialState,
     ...state,
@@ -53,6 +58,7 @@ export function setupAddWalletDialog(el, state = {}) {
   // this.btn = this.getAttribute('btn') || 'Withdraw Funds'
 
   const dialog = document.createElement('dialog')
+  const nameForm = document.createElement('form')
   const addForm = document.createElement('form')
   const genForm = document.createElement('form')
   const progress = document.createElement('progress')
@@ -69,6 +75,7 @@ export function setupAddWalletDialog(el, state = {}) {
   dialog.id = `${state.name}${state.id}`
   dialog.classList.add('responsive')
 
+  nameForm.setAttribute('name', `${state.name}NameForm`)
   addForm.setAttribute('name', `${state.name}AddForm`)
   genForm.setAttribute('name', `${state.name}GenForm`)
 
@@ -83,6 +90,27 @@ export function setupAddWalletDialog(el, state = {}) {
   //     <button type="submit">Generate New Private Key</button>
   //   </fieldset>
   // </form>
+  let generatedName = 'main'
+  let phraseKey = Object.keys(store)
+    .find(k => k.startsWith(KEY_PREFIX))
+
+  if (phraseKey) {
+    generatedName = await DashPhrase.generate(32)
+  }
+
+  nameForm.innerHTML = `
+    <fieldset>
+      <label for="addLabel">
+      Give the wallet a name
+      </label>
+      <input
+        id="addLabel"
+        name="walletName"
+        placeholder="${generatedName}"
+        spellcheck="false"
+      />
+    </fieldset>
+  `
 
   addForm.innerHTML = `
     <fieldset>
@@ -123,6 +151,13 @@ export function setupAddWalletDialog(el, state = {}) {
     </fieldset>
   `
 
+  let formatNameToKey = () => {
+    let name = nameForm.walletName?.value || generatedName
+    return `${KEY_PREFIX}${name}`
+      .replaceAll(/[^\w\s]/gi, '')
+      .replaceAll(' ', '_')
+  }
+
   let handleClose = event => {
     event.preventDefault()
     // console.log('encrypt dialog handleClose', event)
@@ -136,9 +171,18 @@ export function setupAddWalletDialog(el, state = {}) {
     //   }
     // }
   }
+  let handleChangeName = event => {
+    event.preventDefault()
+    console.log(
+      'handleChangeName',
+      // event.target?.value,
+      formatNameToKey(),
+    )
+  }
   let handleReset = event => {
     event.preventDefault()
     // console.log('encrypt dialog handleReset', event)
+    nameForm?.removeEventListener('close', handleReset)
     addForm?.removeEventListener('close', handleReset)
     genForm?.removeEventListener('close', handleReset)
     dialog.close('cancel')
@@ -152,12 +196,16 @@ export function setupAddWalletDialog(el, state = {}) {
     // Generate the new Public & Private Keys
     myKeys = await generateRecoveryPhrase(privateKey)
     let { address, wif, recoveryPhrase } = myKeys
-    let unstoredKeys = [address, recoveryPhrase || wif]
+    let unstoredKeys = [
+      address,
+      recoveryPhrase || wif,
+      formatNameToKey(),
+    ]
 
     // Store new keys in localStorage
     // @ts-ignore
     await storePhraseOrWif(unstoredKeys, passphrase)
-    let storedKeys = await getStoredKeys(passphrase)
+    let { storedKeys } = await getStoredKeys(passphrase)
     await getAddrRows(
       $d.querySelector('#addressGrid'),
       storedKeys,
@@ -188,7 +236,7 @@ export function setupAddWalletDialog(el, state = {}) {
     // if (returnValue && returnValue !== 'cancel') {
     //   state.passphrase = returnValue
     // }
-    let storedKeys = await getStoredKeys(passphrase)
+    let { storedKeys } = await getStoredKeys(passphrase)
 
     await getAddrRows(
       $d.querySelector('#addressGrid'),
@@ -217,7 +265,11 @@ export function setupAddWalletDialog(el, state = {}) {
     // Generate the new Public & Private Keys
     myKeys = await generateRecoveryPhrase()
     let { address, wif, recoveryPhrase } = myKeys
-    let unstoredKeys = [address, recoveryPhrase || wif]
+    let unstoredKeys = [
+      address,
+      recoveryPhrase || wif,
+      formatNameToKey(),
+    ]
 
     // Store new keys in localStorage
     // @ts-ignore
@@ -239,12 +291,16 @@ export function setupAddWalletDialog(el, state = {}) {
 
   dialog.addEventListener('close', handleClose)
 
+  nameForm.addEventListener('change', handleChangeName)
+  nameForm.addEventListener('reset', handleReset)
+  nameForm.addEventListener('submit', handleAddSubmit)
   addForm.addEventListener('reset', handleReset)
   addForm.addEventListener('submit', handleAddSubmit)
   genForm.addEventListener('reset', handleReset)
   genForm.addEventListener('submit', handleGenSubmit)
 
   dialog.insertAdjacentElement('afterbegin', addForm)
+  dialog.insertAdjacentElement('afterbegin', nameForm)
   dialog.insertAdjacentElement('beforeend', genForm)
 
   // this.dialog.querySelector('figure')

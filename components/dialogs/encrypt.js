@@ -6,11 +6,10 @@ import {
   getStakeRows,
 } from '../../lib/ui.js'
 import {
+  isStoreEncrypted,
   getStoredKeys,
   initEncryptedStore,
   encryptKeys,
-  store,
-  ENCRYPT_IV,
 } from '../../lib/storage.js'
 // import {
 //   // Secp256k1,
@@ -37,9 +36,7 @@ let encryptedStore
 let passphrase
 
 export async function setupEncryptDialog(el, state = {}) {
-  const isStoreEncrypted = !!(await store.getItem(`${ENCRYPT_IV}_iv`))
-
-  let cryptDirection = isStoreEncrypted ? 'decrypt' : 'encrypt'
+  let cryptDirection = isStoreEncrypted() ? 'decrypt' : 'encrypt'
   let capCryptDir = `${capitalizeFirstLetter(cryptDirection)}`
   let title = `${capCryptDir} Wallet`
 
@@ -140,7 +137,7 @@ export async function setupEncryptDialog(el, state = {}) {
     // @ts-ignore
     passphrase = event.target.passphrase?.value
 
-    const storedKeys = await getStoredKeys()
+    const { storedKeys } = await getStoredKeys()
 
     if (passphrase) {
       // console.log('passphrase', passphrase)
@@ -153,7 +150,10 @@ export async function setupEncryptDialog(el, state = {}) {
 
       encryptedStore = await initEncryptedStore(passphrase)
 
-      let decryptedStoredKeys = await getStoredKeys(passphrase)
+      let { storedKeys: decryptedKeys } = await getStoredKeys(passphrase)
+      let decryptedStoredKeys = decryptedKeys
+
+      console.log('decryptedStoredKeys', decryptedStoredKeys)
 
       let decryptSuccess = false
 
@@ -186,10 +186,11 @@ export async function setupEncryptDialog(el, state = {}) {
 
       trigger("set:pass", passphrase);
 
-      if (!isStoreEncrypted || decryptSuccess) {
+      if (!isStoreEncrypted() || decryptSuccess) {
         await encryptKeys(storedKeys, passphrase)
 
-        decryptedStoredKeys = await getStoredKeys(passphrase)
+        let { storedKeys: decryptedKeys } = await getStoredKeys(passphrase)
+        decryptedStoredKeys = decryptedKeys
         // event.target.querySelector('button[type="submit"]').disabled = false
         // $d.privKeyForm.querySelector('button').disabled = false
 
@@ -209,7 +210,7 @@ export async function setupEncryptDialog(el, state = {}) {
         storedKeys,
         encryptedStore,
         decryptedStoredKeys,
-        isStoreEncrypted,
+        isStoreEncrypted: isStoreEncrypted(),
         dl: decryptedStoredKeys.length,
         el: storedKeys.length,
       })

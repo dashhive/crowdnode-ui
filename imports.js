@@ -1,26 +1,39 @@
+// @ts-nocheck
+
+import './secp.js';
+
+import './node_modules/@dashincubator/base58check/base58check.js';
+import './node_modules/@dashincubator/ripemd160/ripemd160.js';
 import './node_modules/dashkeys/dashkeys.js';
 import './node_modules/dashhd/dashhd.js';
+import './node_modules/dashtx/dashtx.js';
 import './node_modules/dashphrase/dashphrase.js';
 import './node_modules/dashsight/dashsight.js';
 import './node_modules/dashsight/dashsocket.js';
+import './node_modules/crowdnode/dashcore-lit.js';
 import './node_modules/crowdnode/dashapi.js';
 import './node_modules/crowdnode/crowdnode.js';
-import './node_modules/@dashincubator/secp256k1/secp256k1.js';
-import './node_modules/@dashincubator/base58check/base58check.js';
+import './node_modules/crypticstorage/cryptic.js';
+import './node_modules/crypticstorage/storage.js';
 // import './node_modules/qrcode-svg/dist/qrcode.min.js';
 
-import * as DashKeysTypes from './node_modules/dashkeys/dashkeys.js';
+import * as DashTxTypes from './node_modules/dashtx/dashtx.js';
 import * as DashHDTypes from './node_modules/dashhd/dashhd.js';
+import * as DashKeysTypes from './node_modules/dashkeys/dashkeys.js';
 import * as DashPhraseTypes from './node_modules/dashphrase/dashphrase.js';
 import * as DashSightTypes from './node_modules/dashsight/dashsight.js';
 import * as DashSocketTypes from './node_modules/dashsight/dashsocket.js';
+import * as DashCoreTypes from './node_modules/crowdnode/dashcore-lit.js';
 import * as DashApiTypes from './node_modules/crowdnode/dashapi.js';
 import * as CrowdNodeTypes from './node_modules/crowdnode/crowdnode.js';
-import * as Secp256k1Types from './node_modules/@dashincubator/secp256k1/secp256k1.js'
-import * as Base58CheckTypes from './node_modules/@dashincubator/base58check/base58check.js'
 import * as RIPEMD160Types from './node_modules/@dashincubator/ripemd160/ripemd160.js'
+import * as Base58CheckTypes from './node_modules/@dashincubator/base58check/base58check.js'
+import * as CrypticTypes from '../node_modules/crypticstorage/cryptic.js';
+import * as CrypticStorageTypes from '../node_modules/crypticstorage/storage.js';
 // import * as QRCodeTypes from './node_modules/qrcode-svg/dist/qrcode.min.js'
 
+/** @type {DashTxTypes} */
+export let DashTx = window?.DashTx || globalThis?.DashTx;
 /** @type {DashKeysTypes} */
 export let DashKeys = window?.DashKeys || globalThis?.DashKeys
 /** @type {DashHDTypes} */
@@ -31,29 +44,41 @@ export let DashPhrase = window?.DashPhrase || globalThis?.DashPhrase
 export let DashSight = window?.DashSight || globalThis?.DashSight
 /** @type {DashSocketTypes} */
 export let DashSocket = window?.DashSocket || globalThis?.DashSocket
+/** @type {DashCoreTypes} */
+export let DashCore = window?.DashCore || globalThis?.DashCore
 /** @type {DashApiTypes} */
 export let DashApi = window?.DashApi || globalThis?.DashApi
 /** @type {CrowdNodeTypes} */
 export let CrowdNode = window?.CrowdNode || globalThis?.CrowdNode
-/** @type {Secp256k1Types} */
-export let Secp256k1 = window?.nobleSecp256k1 || globalThis?.nobleSecp256k1
 /** @type {Base58CheckTypes} */
 export let Base58Check = window?.Base58Check || globalThis?.Base58Check
 /** @type {RIPEMD160Types} */
 export let RIPEMD160 = window?.RIPEMD160 || globalThis?.RIPEMD160
+/** @type {CrypticTypes} */
+export let Cryptic =
+  window?.Cryptic || globalThis?.Cryptic;
+/** @type {CrypticStorageTypes} */
+export let CrypticStorage =
+  window?.CrypticStorage || globalThis?.CrypticStorage;
 // /** @type {QRCodeTypes} */
 // export let QRCode = QRCodeTypes || window?.QRCode || globalThis?.QRCode
 
+export let Secp256k1 = window?.nobleSecp256k1 || globalThis?.nobleSecp256k1 || window?.Secp256k1 || globalThis?.Secp256k1
+
 export default {
+  DashTx,
   DashHd,
   DashPhrase,
   DashKeys,
   DashSight,
   DashSocket,
+  DashCore,
   DashApi,
   CrowdNode,
   Secp256k1,
   Base58Check,
   RIPEMD160,
+  Cryptic,
+  CrypticStorage,
   // QRCode,
 }

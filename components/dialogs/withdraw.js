@@ -16,7 +16,8 @@ import {
 
 // @ts-ignore
 let dashsight = DashSight.create({
-  baseUrl: 'https://dashsight.dashincubator.dev',
+  baseUrl: 'https://insight.dash.org',
+  // baseUrl: 'https://dashsight.dashincubator.dev',
 });
 let dashApi = DashApi.create({ insightApi: dashsight });
 
@@ -112,7 +113,7 @@ export function setupWithdrawDialog(el, state = {}) {
     // @ts-ignore
     event?.target?.remove()
 
-    let storedKeys = await getStoredKeys(state.passphrase)
+    let { storedKeys } = await getStoredKeys(state.passphrase)
     await getAddrRows(
       document.querySelector('#addressGrid'),
       storedKeys,
